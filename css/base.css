@@ -1,0 +1,128 @@
+/* Kugelwerk – Design-Tokens & Grundbausteine (hell, warm, weihnachtlich) */
+@font-face {
+  font-family: 'Pacifico'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url(../fonts/pacifico-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'Pacifico'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url(../fonts/pacifico-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+:root {
+  color-scheme: light;
+  --bg: #f8f4ee;
+  --bg-2: #f1ebe2;
+  --surface: #ffffff;
+  --surface-2: #fbf8f4;
+  --ink: #1d2621;
+  --ink-2: #56615a;
+  --ink-3: #8b958f;
+  --line: rgb(29 38 33 / .09);
+  --line-2: rgb(29 38 33 / .16);
+
+  --red: #c3343c;          /* Markenfarbe: Weihnachtsrot */
+  --red-press: #a8272f;
+  --red-tint: #fbe9e7;
+  --pine: #2e6a4f;         /* Tannengrün */
+  --pine-tint: #e5f0ea;
+  --gold: #c99a3a;
+  --gold-tint: #fbf1dc;
+  --warn: #b26a00;
+  --warn-tint: #fff2dc;
+
+  --r-sm: 10px; --r-md: 16px; --r-lg: 24px; --r-xl: 32px;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+  --shadow-1: 0 1px 2px rgb(40 30 20 / .05), 0 2px 8px rgb(40 30 20 / .04);
+  --shadow-2: 0 2px 4px rgb(40 30 20 / .05), 0 12px 32px rgb(40 30 20 / .08);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-round: ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif;
+  --script: 'Pacifico', 'Snell Roundhand', cursive;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background: var(--bg); }
+body {
+  margin: 0; font-family: var(--font); color: var(--ink); background: var(--bg);
+  font-size: 16px; line-height: 1.45; -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; }
+img, svg { display: block; }
+[hidden] { display: none !important; }
+
+/* Buttons */
+.btn {
+  -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; padding: 0 22px; border-radius: 999px;
+  font-family: var(--font); font-size: 17px; font-weight: 650; letter-spacing: -.01em;
+  background: var(--red); color: #fff;
+  transition: transform .15s var(--ease), background .2s, opacity .2s, box-shadow .2s;
+  box-shadow: 0 6px 18px rgb(195 52 60 / .28);
+  text-decoration: none; white-space: nowrap;
+}
+.btn:active { transform: scale(.97); background: var(--red-press); }
+.btn[disabled] { opacity: .45; pointer-events: none; box-shadow: none; }
+.btn.block { width: 100%; }
+.btn.secondary { background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-2); }
+.btn.secondary:active { background: var(--bg-2); }
+.btn.ghost { background: transparent; color: var(--ink-2); box-shadow: none; min-height: 44px; padding: 0 12px; font-weight: 600; font-size: 15px; }
+.btn.pine { background: var(--pine); box-shadow: 0 6px 18px rgb(46 106 79 / .25); }
+.btn.small { min-height: 40px; padding: 0 16px; font-size: 15px; }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.btn .spin { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgb(255 255 255 / .4); border-top-color: #fff; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Eingabefelder */
+.field { display: block; position: relative; }
+.input {
+  -webkit-appearance: none; appearance: none; display: block; width: 100%; max-width: 100%; min-width: 0;
+  height: 56px; margin: 0; padding: 0 18px; border-radius: var(--r-md);
+  border: 1.5px solid var(--line-2); background: var(--surface); color: var(--ink);
+  font-family: var(--font); font-size: 18px; font-weight: 550; line-height: 56px; outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.input::placeholder { color: var(--ink-3); font-weight: 450; }
+.input:focus { border-color: var(--red); box-shadow: 0 0 0 4px var(--red-tint); }
+.input.invalid { border-color: var(--red); background: #fff8f7; }
+
+/* Sheets (von unten) */
+.scrim {
+  position: fixed; inset: 0; background: rgb(25 20 15 / .38); z-index: 50;
+  opacity: 0; transition: opacity .25s var(--ease); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+.scrim.show { opacity: 1; }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 51; max-height: 92dvh; overflow: auto;
+  background: var(--surface); border-radius: 28px 28px 0 0;
+  padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
+  transform: translateY(105%); transition: transform .35s var(--ease);
+  box-shadow: 0 -10px 40px rgb(0 0 0 / .12); overscroll-behavior: contain;
+}
+.sheet.show { transform: none; }
+.sheet .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line-2); margin: 0 auto 14px; }
+@media (min-width: 640px) {
+  .sheet { left: 50%; right: auto; width: 520px; margin-left: -260px; bottom: 24px; border-radius: 28px; }
+}
+
+/* Toast */
+.toast {
+  position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top)); z-index: 80;
+  transform: translate(-50%, -150%); transition: transform .35s var(--ease);
+  background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 16px;
+  font-size: 15px; font-weight: 550; box-shadow: var(--shadow-2); max-width: calc(100vw - 32px);
+  display: flex; gap: 10px; align-items: center;
+}
+.toast.show { transform: translate(-50%, 0); }
+.toast.err { background: #8f1f26; }
+
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.num { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
