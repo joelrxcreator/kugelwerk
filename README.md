@@ -1,4 +1,4 @@
-# Kugelwerk 🎄
+# Namenskugeln · Lohmarer Weihnachtsmarkt (MBG Lohmar) 🎄
 
 Bestell-App für personalisierte, 3D-gedruckte Baumkugeln auf dem Weihnachtsmarkt.
 

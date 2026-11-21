@@ -1,11 +1,11 @@
 {
-  "name": "Kugelwerk – Baumkugeln mit Namen",
-  "short_name": "Kugelwerk",
+  "name": "Namenskugeln · Lohmarer Weihnachtsmarkt",
+  "short_name": "Namenskugeln",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f8f4ee",
-  "theme_color": "#f8f4ee",
+  "background_color": "#fffbf3",
+  "theme_color": "#fffbf3",
   "lang": "de",
   "icons": [
     { "src": "img/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },

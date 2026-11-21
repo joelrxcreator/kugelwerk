@@ -1,4 +1,4 @@
-// Kugelwerk – Backoffice
+// Namenskugeln · Lohmarer Weihnachtsmarkt – Backoffice
 (function () {
   'use strict';
   const { rpc } = window.KW_API;
@@ -12,7 +12,8 @@
   const nr = n => n ? '#' + String(n).padStart(2, '0') : '–';
   const mins = ms => Math.round(ms / 60000);
   const ago = d => { const m = mins(Date.now() - new Date(d)); return m < 1 ? 'gerade eben' : m < 60 ? `vor ${m} Min.` : `vor ${Math.floor(m / 60)} Std. ${m % 60} Min.`; };
-  const motif = k => `img/v-${k}-m.jpg`;
+  const MOTIF_ICON = { herzen: 'heart', sterne: 'star', glanzsterne: 'sparkles', schneeflocken: 'snowflake', pfoten: 'paw' };
+  const motifIco = k => `<span class="mot">${I(MOTIF_ICON[k] || 'star')}</span>`;
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { } },
@@ -31,14 +32,16 @@
     lastOk: 0,
     showDone: false,
     showUnpaid: true,
+    wake: false,
     busy: false
   };
 
   // ---------- Toast ----------
   let tt;
-  function toast(m, err = false) {
+  function toast(m, err = false, undo = null) {
     const t = $('#toast'); t.textContent = m; t.classList.toggle('err', err); t.classList.add('show');
-    clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 3000);
+    if (undo) { const b = document.createElement('button'); b.className = 'toast-undo'; b.textContent = 'Rückgängig'; b.onclick = () => { t.classList.remove('show'); undo(); }; t.append(b); }
+    clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), undo ? 8000 : 3000);
   }
   function errMsg(e) {
     const c = (e && e.code) || '';
@@ -90,8 +93,8 @@
   // ---------- Login ----------
   function renderLogin(msg = '') {
     root.innerHTML = `<div class="login"><form class="login-card" id="lf">
-      <span class="brand-mark">${logo()}</span>
-      <h1>Kugelwerk Backoffice</h1>
+      <img class="login-logo" src="img/mbg-logo.svg" alt="MBG Lohmar">
+      <h1>Namenskugeln · Backoffice</h1>
       <p>Bitte mit dem Backoffice-Passwort anmelden.</p>
       <input class="input" id="pw" type="password" placeholder="Passwort" autocomplete="current-password" required>
       <button class="btn" type="submit" id="lb">Anmelden</button>
@@ -171,27 +174,28 @@
   // ---------- Rendering ----------
   function render() {
     if (!S.session) return renderLogin();
-    if (!S.data) { root.innerHTML = `<div class="login"><div class="login-card"><span class="brand-mark">${logo()}</span><p>Lade Bestellungen …</p></div></div>`; return; }
+    if (!S.data) { root.innerHTML = `<div class="login"><div class="login-card"><img class="login-logo" src="img/mbg-logo.svg" alt="MBG Lohmar"><p>Lade Bestellungen …</p></div></div>`; return; }
     const d = S.data, st = d.settings;
     const scrollY = window.scrollY;
-    const unpaid = d.orders.filter(o => o.status === 'unbezahlt');
+    const unpaid = d.orders.filter(o => o.status === 'unbezahlt' || o.status === 'verfallen');
     const ready = d.orders.filter(o => o.status === 'fertig');
     const done = d.orders.filter(o => ['abgeholt', 'storniert'].includes(o.status)).sort((a, b) => new Date(b.picked_at || b.paid_at || b.created_at) - new Date(a.picked_at || a.paid_at || a.created_at));
     const w = waiting();
     const printing = d.plates.filter(p => p.status === 'druck');
     const stale = Date.now() - S.lastOk > 15000;
-    document.title = (w.length ? `(${w.length}) ` : '') + 'Kugelwerk Backoffice';
+    document.title = (w.length ? `(${w.length}) ` : '') + 'Backoffice · Namenskugeln';
 
     root.innerHTML = `
     <header class="bar">
-      <div class="title"><span class="brand-mark">${logo()}</span>Kugelwerk <small>Backoffice</small></div>
-      <div class="stat"><small>Heute</small><b>${d.stats.today_orders} Best. · ${d.stats.today_items} Kugeln</b></div>
-      <div class="stat"><small>Umsatz</small><b>${eur(d.stats.today_revenue)}</b></div>
+      <div class="title"><img class="bar-logo" src="img/mbg-logo.svg" alt="MBG Lohmar"><span>Namenskugeln <small>Backoffice</small></span></div>
+      <div class="stat"><small>Heute</small><b>${d.stats.today_items} Kugeln · ${eur(d.stats.today_revenue)}</b></div>
       <div class="stat"><small>Neue Wartezeit</small><b>ca. ${d.wait_minutes} Min.</b></div>
+      ${d.closing ? `<div class="stat"><small>Bestellschluss</small><b class="${new Date(Date.now() + d.wait_minutes * 60000) > new Date(d.closing) ? 'danger' : ''}">${new Date(Date.now() + d.wait_minutes * 60000) > new Date(d.closing) ? 'ausgebucht' : 'bis ' + hhmm(d.closing) + ' Uhr'}</b></div>` : ''}
       <div class="spacer"></div>
       <span class="live ${stale ? 'off' : ''}">${stale ? 'Keine Verbindung' : 'Live'}</span>
-      <button class="tbtn ${st.accepting ? 'on' : 'off'}" id="accBtn" title="Neue Bestellungen annehmen">${st.accepting ? 'Bestellungen offen' : 'Bestellungen pausiert'}</button>
+      <button class="tbtn ${st.accepting ? 'on' : 'off'}" id="accBtn" title="Neue Bestellungen annehmen">${st.accepting ? 'Offen' : 'Pausiert'}</button>
       <div class="stepper" title="Zusätzliche Wartezeit für Kunden"><button id="exMinus" aria-label="5 Minuten weniger">−</button><span>${st.extra_minutes >= 0 ? '+' : ''}${st.extra_minutes} Min.</span><button id="exPlus" aria-label="5 Minuten mehr">+</button></div>
+      <button class="tbtn icon ${S.wake ? 'on' : ''}" id="wakeBtn" title="Bildschirm wach halten">${I('sun')}</button>
       <button class="tbtn icon" id="sndBtn" title="Ton bei neuen Bestellungen">${I(S.sound ? 'bell' : 'bellOff')}</button>
       <button class="tbtn icon" id="setBtn" title="Einstellungen">${I('settings')}</button>
     </header>
@@ -202,7 +206,7 @@
         ${w.length ? plannerHtml(printing) : ''}
         ${queueHtml()}
         ${unpaid.length ? `
-          <button class="sub-head ${S.showUnpaid ? 'open' : ''}" id="tglUnpaid">${I('chevronRight')} Noch nicht bezahlt (${unpaid.length})</button>
+          <button class="sub-head ${S.showUnpaid ? 'open' : ''}" id="tglUnpaid">${I('chevronRight')} Nicht bezahlt / abgelaufen (${unpaid.length})</button>
           ${S.showUnpaid ? unpaid.map(o => unpaidHtml(o)).join('') : ''}` : ''}
       </section>
 
@@ -248,12 +252,13 @@
       <div class="items">${o.items.map(i => i.status === 'wartet' ? `
         <div class="irow ${S.sel.has(i.id) ? 'sel' : ''}" data-sel="${i.id}">
           <span class="chk">${S.sel.has(i.id) ? I('check') : ''}</span>
-          <span class="mot"><img src="${motif(i.variant)}" alt=""></span>
+          ${motifIco(i.variant)}
           <span class="nm">${esc(i.name)}</span>
+          <button class="mini-btn" data-copy="${esc(i.name)}" title="Name kopieren (für Bambu Studio)">${I('copy')}</button>
           <span class="vchip">${esc(label(i.variant))}</span>
           <button class="mini-btn" data-edit="${i.id}" title="Name korrigieren">${I('pencil')}</button>
         </div>` : `
-        <div class="irow static"><span class="chk" style="opacity:.3"></span><span class="mot"><img src="${motif(i.variant)}" alt=""></span><span class="nm" style="opacity:.5">${esc(i.name)}</span><span class="st">${i.status === 'druck' ? 'im Druck' : 'fertig'}</span></div>`).join('')}
+        <div class="irow static"><span class="chk" style="opacity:.3"></span>${motifIco(i.variant)}<span class="nm" style="opacity:.5">${esc(i.name)}</span><span class="st">${i.status === 'druck' ? 'im Druck' : 'fertig'}</span></div>`).join('')}
       </div></article>`).join('');
   }
 
@@ -282,7 +287,7 @@
       <div class="ptop"><b>${label}</b><span class="ptag ${over ? 'over' : ''}">${over ? 'Zeit um – fertig?' : 'druckt'}</span>
         <span class="ptime num">${over ? `+${mins(-left)} Min.` : `noch ${Math.max(1, mins(left))} Min.`}</span></div>
       <div class="pbar"><i style="width:${pct.toFixed(1)}%"></i></div>
-      <div class="plist">${items.map(i => `<div><span class="no">${nr(i.order.number)}</span><span class="nm">${esc(i.name)}</span><span class="vchip">${esc(label2(i.variant))}</span></div>`).join('')}</div>
+      <div class="plist">${items.map(i => `<div><span class="no">${nr(i.order.number)}</span><span class="nm">${esc(i.name)}</span><span class="vchip">${esc(label2(i.variant))}</span><button class="mini-btn" data-copy="${esc(i.name)}" title="Name kopieren">${I('copy')}</button></div>`).join('')}</div>
       <div class="pactions">
         <button class="btn pine" data-finish="${pl.id}">${I('check')} Fertig</button>
         <button class="btn secondary" data-time="${pl.id}" title="Druckzeit anpassen">${I('clock')} ${pl.minutes} Min.</button>
@@ -300,9 +305,9 @@
   }
 
   function unpaidHtml(o) {
-    const left = 30 - mins(Date.now() - new Date(o.created_at));
-    return `<article class="ocard" style="opacity:.85"><div class="rcard">
-      <div class="names"><b>${esc((o.items || []).map(i => i.name).join(', '))}</b><small>${eur(o.total)} · vorgemerkt ${ago(o.created_at)} · verfällt in ${Math.max(0, left)} Min.</small></div>
+    const left = S.data.settings.unpaid_ttl_min - mins(Date.now() - new Date(o.created_at));
+    return `<article class="ocard" style="opacity:.88"><div class="rcard">
+      <div class="names"><b class="plain">${esc((o.items || []).map(i => i.name).join(', '))}</b><small>${eur(o.total)} · vorgemerkt ${ago(o.created_at)} · ${o.status === 'verfallen' ? '<span class="danger">abgelaufen</span>' : `verfällt in ${Math.max(0, left)} Min.`}</small></div>
       <button class="btn secondary small" data-paid="${o.id}" title="Wenn der Kunde den Code nicht scannen kann">Bezahlt</button>
       <button class="mini-btn" data-cancel="${o.id}" title="Löschen">${I('trash')}</button>
     </div></article>`;
@@ -336,7 +341,15 @@
       if (ok) autoSelect();
       S.busy = false; render();
     });
-    on('[data-finish]', el => act('admin_finish_plate', { p_plate: el.dataset.finish }, 'Platte fertig – Kunden sehen „Abholbereit“'));
+    on('[data-finish]', async el => {
+      const id = el.dataset.finish;
+      if (await act('admin_finish_plate', { p_plate: id })) toast('Platte fertig – Kunden sehen „Abholbereit“', false, () => act('admin_reopen_plate', { p_plate: id }, 'Zurück im Druck'));
+    });
+    on('[data-copy]', async el => {
+      try { await navigator.clipboard.writeText(el.dataset.copy); toast(`„${el.dataset.copy}“ kopiert`); }
+      catch { const r = document.createRange(); const n = el.previousElementSibling; r.selectNodeContents(n); getSelection().removeAllRanges(); getSelection().addRange(r); toast('Markiert – mit ⌘C kopieren'); }
+    });
+    on('#wakeBtn', toggleWake);
     on('[data-abort]', async el => {
       if (await dialog({ title: 'Druck abbrechen?', text: 'Die Kugeln kommen zurück in die Warteschlange.', ok: 'Abbrechen & zurücklegen', cancel: 'Weiter drucken', danger: true }))
         act('admin_cancel_plate', { p_plate: el.dataset.abort }, 'Zurück in der Warteschlange');
@@ -346,7 +359,10 @@
       const v = await dialog({ title: 'Druckzeit dieser Platte', text: 'Gesamtdauer in Minuten (z. B. aus Bambu Studio). Die Abholzeiten passen sich automatisch an.', input: { type: 'number', value: pl.minutes }, ok: 'Speichern' });
       if (v != null && +v > 0) act('admin_set_plate_minutes', { p_plate: pl.id, p_minutes: Math.round(+v) }, 'Druckzeit gespeichert');
     });
-    on('[data-pick]', el => act('admin_set_order_status', { p_order: el.dataset.pick, p_status: 'abgeholt' }, 'Als abgeholt markiert'));
+    on('[data-pick]', async el => {
+      const id = el.dataset.pick;
+      if (await act('admin_set_order_status', { p_order: id, p_status: 'abgeholt' })) toast('Als abgeholt markiert', false, () => act('admin_set_order_status', { p_order: id, p_status: 'zurueck' }, 'Rückgängig gemacht'));
+    });
     on('[data-undo]', el => act('admin_set_order_status', { p_order: el.dataset.undo, p_status: 'zurueck' }, 'Rückgängig gemacht'));
     on('[data-paid]', async el => {
       if (await dialog({ title: 'Als bezahlt markieren?', text: 'Nur wenn an der Kasse wirklich bezahlt wurde. Die Bestellung bekommt dann eine Nummer und kommt in die Warteschlange.', ok: 'Ja, bezahlt' }))
@@ -419,9 +435,14 @@
           <div class="row"><div class="lbl"><b>Max. Kugeln pro Bestellung</b></div><input type="number" min="1" max="40" id="sMaxItems" value="${st.max_items}"><span class="unit"></span></div>
           <div class="row"><div class="lbl"><b>Reservierung ohne Bezahlung</b><small>Danach verfällt die Bestellung</small></div><input type="number" min="5" max="240" id="sTtl" value="${st.unpaid_ttl_min}"><span class="unit">Min.</span></div>
         </div>
+        <div class="group-title">Markttage & Bestellschluss</div>
+        <div class="group">
+          ${closingRows(st.closing || {})}
+          <div class="row"><div class="lbl"><small>Keine neuen Bestellungen, die erst nach Marktende fertig würden. Uhrzeit leer lassen = kein Bestellschluss an dem Tag.</small></div><button class="btn secondary small" id="addDay">+ Tag</button></div>
+        </div>
 
         <div class="group-title">Motive</div>
-        <div class="group">${(st.variants || []).map((v, i) => `<div class="row"><span class="vrow-img"><img src="${motif(v.key)}" alt=""></span><div class="lbl"><b>${esc(v.label)}</b><small>${v.active ? 'wird angeboten' : 'ausgeblendet'}</small></div><button class="switch" role="switch" aria-checked="${!!v.active}" data-var="${i}" aria-label="${esc(v.label)} anbieten"></button></div>`).join('')}</div>
+        <div class="group">${(st.variants || []).map((v, i) => `<div class="row">${motifIco(v.key)}<div class="lbl"><b>${esc(v.label)}</b><small>${v.active ? 'wird angeboten' : 'ausgeblendet'}</small></div><button class="switch" role="switch" aria-checked="${!!v.active}" data-var="${i}" aria-label="${esc(v.label)} anbieten"></button></div>`).join('')}</div>
 
         <div style="display:flex;gap:10px;margin-top:18px"><button class="btn pine" id="saveSet" style="flex:1">Speichern</button></div>
 
@@ -453,6 +474,9 @@
       const code = String(Math.floor(1000 + Math.random() * 9000));
       if (await act('admin_update_settings', { p_patch: { pay_code: code } }, 'Neuer Kassen-Code: ' + code)) { close(); setTimeout(openSettings, 400); }
     };
+    const bindClosing = () => dr.querySelectorAll('[data-cdel]').forEach(b => b.onclick = () => b.closest('.closing-row').remove());
+    bindClosing();
+    $('#addDay', dr).onclick = () => { const last = [...dr.querySelectorAll('.closing-row')].pop(); last.insertAdjacentHTML('afterend', closingRows({ '': '' }).replace('value=""', 'value=""')); bindClosing(); };
     $('#saveSet', dr).onclick = async () => {
       const num = (id, d) => { const v = parseFloat($(id, dr).value); return isFinite(v) ? v : d; };
       const patch = {
@@ -465,6 +489,7 @@
         bulk_from: Math.round(Math.max(1, num('#sBulk', st.bulk_from))),
         max_items: Math.round(Math.min(40, Math.max(1, num('#sMaxItems', st.max_items)))),
         unpaid_ttl_min: Math.round(Math.min(240, Math.max(5, num('#sTtl', st.unpaid_ttl_min)))),
+        closing: readClosing(dr),
         variants: vars
       };
       // Druckzeiten-Liste an "max pro Platte" anpassen
@@ -491,6 +516,29 @@
 
   // ---------- Start ----------
   let timer;
+  function closingRows(c) {
+    const days = Object.keys(c).sort();
+    if (!days.length) days.push('');
+    return days.map(d => `<div class="row closing-row"><div class="lbl"><b>Markttag</b></div><input type="date" class="wide" data-cday value="${esc(d)}"><input type="time" data-ctime value="${esc(c[d] || '')}"><button class="mini-btn" data-cdel title="Tag entfernen">${I('x')}</button></div>`).join('');
+  }
+  function readClosing(dr) {
+    const out = {};
+    dr.querySelectorAll('.closing-row').forEach(r => {
+      const d = r.querySelector('[data-cday]').value, t = r.querySelector('[data-ctime]').value;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d) && /^\d{1,2}:\d{2}$/.test(t)) out[d] = t;
+    });
+    return out;
+  }
+  let wakeLock = null;
+  async function toggleWake() {
+    try {
+      if (wakeLock) { await wakeLock.release(); wakeLock = null; S.wake = false; toast('Bildschirm darf wieder ausgehen'); }
+      else { wakeLock = await navigator.wakeLock.request('screen'); S.wake = true; toast('Bildschirm bleibt an'); wakeLock.addEventListener('release', () => { if (S.wake && document.visibilityState === 'visible') return; }); }
+    } catch { toast('Dieser Browser kann den Bildschirm nicht wach halten – in den Mac-Einstellungen „Bildschirm aus“ auf „Nie“ stellen.', true); }
+    render();
+  }
+  document.addEventListener('visibilitychange', async () => { if (S.wake && document.visibilityState === 'visible') { try { wakeLock = await navigator.wakeLock.request('screen'); } catch { } } });
+
   function start() {
     render(); load();
     clearInterval(timer);

@@ -3,47 +3,41 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Kugelwerk – Deine Baumkugel mit Namen</title>
-  <meta name="description" content="Personalisierte Weihnachtskugeln mit deinem Namen – live am Stand 3D-gedruckt. Einfach gestalten, an der Kasse bezahlen, abholen.">
-  <meta name="theme-color" content="#f8f4ee">
-  <meta name="apple-mobile-web-app-title" content="Kugelwerk">
+  <title>Namenskugeln · Lohmarer Weihnachtsmarkt</title>
+  <meta name="description" content="Weihnachtskugeln mit deinem Namen – live am Stand der MBG Lohmar 3D-gedruckt. Einfach gestalten, an der Kasse bezahlen, abholen.">
+  <meta name="theme-color" content="#fffbf3">
+  <meta name="apple-mobile-web-app-title" content="Namenskugeln">
   <meta name="format-detection" content="telephone=no">
   <link rel="icon" href="img/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="preload" href="fonts/pacifico-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/base.css?v=2">
-  <link rel="stylesheet" href="css/shop.css?v=2">
+  <link rel="preload" href="fonts/italiana-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/josefin-latin-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/base.css?v=3">
+  <link rel="stylesheet" href="css/shop.css?v=3">
 </head>
 <body>
-  <div class="snow" id="snow" aria-hidden="true"></div>
-
   <header class="top">
     <div class="wrap">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="14" r="7"/><circle cx="12" cy="4.6" r="1.6"/><path d="M12 6.2V7"/><path d="m12 11 .9 1.9 2 .2-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.2Z" fill="currentColor" stroke-width="1"/></svg>
-        </span>
-        Kugelwerk
-      </div>
+      <img class="mbg" src="img/mbg-logo.svg" alt="MBG Lohmar" width="68" height="44">
       <div id="topRight"></div>
     </div>
   </header>
 
   <main id="app" class="wrap" aria-live="polite"></main>
 
-  <div class="dock hide" id="dock">
+  <div class="dock" id="dock" hidden>
     <div class="wrap">
       <div class="sum"><small id="dockLabel">1 Kugel</small><b class="num" id="dockTotal">2,50 €</b><s id="dockStrike" hidden></s></div>
-      <button class="btn" id="dockBtn">Bestellen</button>
+      <button class="btn" id="dockBtn">Weiter</button>
     </div>
   </div>
 
   <div class="toast" id="toast" role="status"></div>
 
-  <script src="js/config.js?v=2"></script>
-  <script src="js/api.js?v=2"></script>
-  <script src="js/icons.js?v=2"></script>
-  <script src="js/shop.js?v=2"></script>
+  <script src="js/config.js?v=3"></script>
+  <script src="js/api.js?v=3"></script>
+  <script src="js/icons.js?v=3"></script>
+  <script src="js/shop.js?v=3"></script>
 </body>
 </html>
