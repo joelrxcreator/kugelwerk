@@ -268,3 +268,13 @@ canvas.confetti { position: fixed; inset: 0; pointer-events: none; z-index: 90; 
 
 @media (min-width: 700px) { .hero h1 { font-size: 48px; } .brush .l1 { font-size: 56px; } .brush .l3 { font-size: 60px; } }
 @media (max-width: 350px) { .brush .l1 { font-size: 36px; } .brush .l3 { font-size: 37px; } .brush .l2 { font-size: 13px; } .hero h1 { font-size: 33px; } }
+
+/* Live-Vorschau des Namens in der Kugel-Schrift */
+.name-preview { margin-top: 10px; border-radius: 18px; padding: 14px 12px 10px; text-align: center; background: var(--accent-tint); overflow: hidden; }
+.name-preview span { display: block; font-family: var(--script); font-size: 46px; line-height: 1.25; color: var(--accent); white-space: nowrap; transform: rotate(-3deg); }
+.name-preview small { display: block; margin-top: 6px; font-family: var(--sub); font-size: 12px; font-weight: 600; color: var(--ink-3); letter-spacing: .02em; }
+.name-preview.empty span { opacity: .3; }
+.scr { font-family: var(--script); font-weight: 400; font-size: 1.25em; letter-spacing: .01em; }
+.line .nm .scr { display: block; font-size: 24px; line-height: 1.2; }
+.line .nm small { display: block; font-size: 11.5px; letter-spacing: .08em; color: var(--ink-3); font-weight: 600; }
+.krow .nm.scr { font-size: 25px; font-weight: 400; }

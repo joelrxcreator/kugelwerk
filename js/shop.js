@@ -192,7 +192,7 @@
       inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } };
       inp.onblur = () => { S.draft[S.active].name = inp.value.trim().replace(/\s+/g, ' '); inp.value = S.draft[S.active].name; saveDraft(); };
     }
-    updateBulkHint();
+    updateBulkHint(); fitPreview();
     const n = S.draft.length; $('#countLbl').textContent = n === 1 ? '1 Kugel' : `${n} Kugeln`;
   }
 
@@ -207,6 +207,7 @@
           <input id="nameInput" class="input" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false"
             enterkeyhint="done" maxlength="${MAX_NAME}" placeholder="Name eingeben, z. B. Emma" value="${esc(it.name)}" aria-label="Name für Kugel ${i + 1}">
           <div class="name-hint" id="nameHint">${it.name ? '' : 'Vorname oder Spitzname – max. 16 Zeichen.'}</div>
+          <div class="name-preview ${it.name ? '' : 'empty'}" id="namePrev" aria-hidden="true"><span>${esc(it.name) || 'Dein Name'}</span><small>So ungefähr sieht die Schrift auf der Kugel aus</small></div>
         </div>
         <div>
           <div class="eyebrow" style="margin:0 2px 10px">Motiv wählen</div>
@@ -222,7 +223,7 @@
   function cardRow(it, i) {
     return `<article class="kcard"><div class="krow" data-i="${i}" role="button" tabindex="0" aria-label="Kugel ${i + 1} bearbeiten">
       ${motif(it.variant)}
-      <div class="txt"><div class="nm ${it.name ? '' : 'empty'}">${it.name ? esc(it.name) : 'Name fehlt noch'}</div><div class="vr">${esc(labelOf(it.variant))}</div></div>
+      <div class="txt"><div class="nm ${it.name ? 'scr' : 'empty'}">${it.name ? esc(it.name) : 'Name fehlt noch'}</div><div class="vr">${esc(labelOf(it.variant))}</div></div>
       <button class="icon-btn" data-del="${i}" aria-label="Kugel ${i + 1} entfernen">${I('trash')}</button>
     </div></article>`;
   }
@@ -236,6 +237,13 @@
     } else { hint.textContent = v.length >= MAX_NAME ? `Maximal ${MAX_NAME} Zeichen.` : ''; hint.className = 'name-hint'; }
     inp.classList.remove('invalid');
     S.draft[S.active].name = v; saveDraft(); updateDock();
+    const pv = $('#namePrev'); if (pv) { pv.classList.toggle('empty', !v.trim()); pv.querySelector('span').textContent = v.trim() || 'Dein Name'; fitPreview(); }
+  }
+  function fitPreview() {
+    const pv = $('#namePrev'); if (!pv) return;
+    const sp = pv.querySelector('span'); sp.style.fontSize = '';
+    let size = parseFloat(getComputedStyle(sp).fontSize);
+    while (sp.scrollWidth > pv.clientWidth - 24 && size > 20) { size -= 2; sp.style.fontSize = size + 'px'; }
   }
   function focusName() { const i = $('#nameInput'); if (i && !i.value) setTimeout(() => i.focus(), 50); }
 
@@ -317,7 +325,7 @@
     const sh = sheet(`
       <h3>Alles richtig?</h3>
       <p class="sub">Bitte prüfe die Schreibweise – genau so wird gedruckt.</p>
-      <div class="lines">${S.draft.map(it => `<div class="line">${motif(it.variant)}<span class="nm">${esc(it.name)}</span><span class="vr">${esc(labelOf(it.variant))}</span></div>`).join('')}</div>
+      <div class="lines">${S.draft.map(it => `<div class="line">${motif(it.variant)}<span class="nm"><span class="scr">${esc(it.name)}</span><small>Schreibweise: ${esc(it.name)}</small></span><span class="vr">${esc(labelOf(it.variant))}</span></div>`).join('')}</div>
       <div class="total"><span>${n === 1 ? '1 Kugel' : `${n} Kugeln à ${eur(p.each)}`}</span><b class="num">${eur(p.total)}</b></div>
       <div class="note">${I('wallet')}<span>Bezahlt wird gleich an der Kasse – bar oder mit Karte. Erst dann starten wir den Druck.</span></div>
       <div class="note" id="etaNote" hidden></div>
@@ -421,7 +429,7 @@
     $('#back').onclick = () => others ? go('list') : go('shop');
     bindOrder(o);
   }
-  const itemsLines = o => `<div class="items-list">${o.items.map(it => `<div class="line">${motif(it.variant)}<span class="nm">${esc(it.name)}</span><span class="vr">${esc(labelOf(it.variant))}</span></div>`).join('')}</div>`;
+  const itemsLines = o => `<div class="items-list">${o.items.map(it => `<div class="line">${motif(it.variant)}<span class="nm"><span class="scr">${esc(it.name)}</span></span><span class="vr">${esc(labelOf(it.variant))}</span></div>`).join('')}</div>`;
 
   function payView(o) {
     return `<section class="pay-hero">
@@ -749,6 +757,7 @@
 
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
   document.addEventListener('contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
+  if (document.fonts) document.fonts.load("40px Kugelschrift").then(fitPreview).catch(() => { });
   history.replaceState({ view: 'shop' }, '', location.pathname + location.search);
   boot();
 })();
