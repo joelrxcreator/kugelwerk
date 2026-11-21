@@ -1,0 +1,37 @@
+/* 3D-Generator */
+.gen { max-width: 1200px; margin: 0 auto; padding: 20px 24px 48px; display: grid; gap: 20px; }
+@media (max-width: 760px) { .gen { padding: 14px 16px 40px; } }
+.hoehe { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 14px; color: var(--ink-2); }
+.hoehe input { width: 64px; height: 40px; border-radius: 12px; border: 1.5px solid var(--line-2); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; text-align: center; }
+
+.hinweis { background: var(--surface); border-radius: var(--r-lg); padding: 22px; box-shadow: var(--shadow-1), inset 0 0 0 1px var(--line); }
+.hinweis h2 { font-size: 20px; margin-bottom: 6px; }
+.hinweis p { color: var(--ink-2); margin-bottom: 14px; max-width: 60ch; }
+
+.eingabe { display: grid; gap: 10px; justify-items: start; }
+#zeilen { display: grid; gap: 10px; width: 100%; }
+.zeile { display: grid; grid-template-columns: 52px minmax(0, 1fr) 190px 44px; gap: 10px; align-items: center; }
+@media (max-width: 640px) { .zeile { grid-template-columns: 40px minmax(0, 1fr) 44px; } .zeile select { grid-column: 2 / 3; } }
+.zeile .nr { font-weight: 800; color: var(--ink-3); text-align: center; font-variant-numeric: tabular-nums; }
+.zeile .input { height: 48px; line-height: 48px; font-size: 17px; }
+.zeile select { height: 48px; border-radius: var(--r-md); border: 1.5px solid var(--line-2); background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; padding: 0 12px; }
+.zeile .weg { width: 44px; height: 44px; border-radius: 12px; border: 0; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 22px; }
+.zeile .weg:hover { background: var(--bg-2); color: var(--ink); }
+
+.karten { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+.karte { background: var(--surface); border-radius: var(--r-lg); padding: 14px; box-shadow: var(--shadow-1), inset 0 0 0 1px var(--line); display: grid; gap: 8px; color: var(--ink); }
+.karte svg { width: 100%; height: auto; }
+.karte .kopf { display: flex; align-items: center; gap: 8px; font-weight: 750; }
+.karte .kopf small { color: var(--ink-3); font-weight: 600; }
+.karte .status { font-size: 13.5px; font-weight: 650; padding: 6px 10px; border-radius: 10px; }
+.karte .status.ok { background: var(--pine-tint); color: var(--pine); }
+.karte .status.fehler { background: #fbe9e7; color: #b3261e; }
+.karte .status.rechnet { background: var(--bg-2); color: var(--ink-2); }
+.karte details { font-size: 12.5px; color: var(--ink-2); }
+.karte details summary { cursor: pointer; font-weight: 650; }
+.karte details li { margin-left: 16px; }
+.karte .stl { justify-self: start; }
+
+.aktionen { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 18px; }
+.farbig { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; color: var(--ink-2); }
+.klein { font-size: 13.5px; color: var(--ink-3); margin-top: 8px; max-width: 70ch; }

@@ -8,7 +8,7 @@ Das Repo enthält zwei Teile, die in **getrennten Claude-Code-Fenstern** bearbei
 | Teil | Status | Ordner |
 |---|---|---|
 | **1 · Bestell-App** (Kundenseite + Backoffice) | fertig, live | `index.html`, `admin.html`, `css/`, `js/`, `supabase/` |
-| **2 · 3D-Generator** (fertige 3MF-Druckdateien aus Name + Motiv) | geplant | `generator/` (neu) – Plan: `docs/STUFE-2-3D-GENERATOR.md` |
+| **2 · 3D-Generator** (fertige 3MF-Druckdateien aus Name + Motiv) | Prototyp (Schneeflocken im Test) | `generator/` – Regeln & Aufbau: `generator/README.md`, Plan: `docs/STUFE-2-3D-GENERATOR.md` |
 
 **Wer am 3D-Generator arbeitet, ändert die Bestell-App nur minimal** (ein Knopf im Backoffice, siehe Plan) und bricht nichts am Bestellablauf.
 

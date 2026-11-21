@@ -7,8 +7,9 @@ export const STANDARD = {
   zielVerbindung: 1.2,   // so breit versuchen wir sie zu machen
   brueckePunkt: 1.0,     // Breite der Brücke zu i-Punkten / Umlaut-Punkten
   brueckeBuchstabe: 1.6, // Breite der Brücke zwischen Buchstaben (z. B. W -> i)
-  maxBruecke: 6,         // längere Lücken werden nicht überbrückt
-  maxSchieben: 4,        // so weit darf ein abgesetzter Anfangs-/Endbuchstabe rangeschoben werden
+  maxBruecke: 2.5,       // längere Lücken zwischen Buchstaben werden nicht überbrückt (Teil hängt dann am Motiv)
+  maxSchieben: 3,        // so weit darf ein abgesetzter Anfangs-/Endbuchstabe rangeschoben werden
+  maxBeruehrung: 3.5,    // berühren sich zwei Buchstaben breiter, kleben sie aneinander -> nicht schieben
   abstandRing: 2.0,      // Name hält mindestens so viel Abstand zum Ring
   nameMaxBreite: 80,     // größte Namensbreite
   nameMaxHoehe: 36,      // größte Namenshöhe

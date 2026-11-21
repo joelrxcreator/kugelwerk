@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>3D-Generator · Namenskugeln</title>
+  <meta name="theme-color" content="#fffbf3">
+  <script>
+    (function () { var t = 'auto'; try { t = JSON.parse(localStorage.getItem('kw.theme')) || 'auto'; } catch (e) { }
+      document.documentElement.setAttribute('data-theme', t); })();
+  </script>
+  <link rel="icon" href="../img/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/base.css?v=5">
+  <link rel="stylesheet" href="../css/admin.css?v=5">
+  <link rel="stylesheet" href="generator.css?v=1">
+</head>
+<body>
+  <header class="bar">
+    <a class="tbtn icon" href="../admin.html" title="Zurück zum Backoffice" aria-label="Zurück zum Backoffice">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <div class="title">3D-Generator <small id="untertitel">Druckplatte</small></div>
+    <div class="spacer"></div>
+    <label class="hoehe">Dicke <input id="hoehe" type="number" min="2" max="10" step="0.5" inputmode="decimal"> mm</label>
+    <button class="tbtn" id="schriftKnopf" type="button"></button>
+    <input id="schriftDatei" type="file" accept=".otf,.ttf,font/otf,font/ttf" hidden>
+  </header>
+
+  <main class="gen">
+    <section id="ohneSchrift" class="hinweis" hidden>
+      <h2>Einmalig: Schrift auswählen</h2>
+      <p>Wähle deine gekaufte Datei <b>„Heartland Script“ (.otf oder .ttf)</b>. Sie bleibt nur hier im Browser auf diesem Mac gespeichert und wird nirgends hochgeladen.</p>
+      <button class="btn" id="schriftWaehlen" type="button">Schrift-Datei wählen</button>
+    </section>
+
+    <section class="eingabe">
+      <div id="zeilen"></div>
+      <button class="btn secondary small" id="plus" type="button">+ Kugel</button>
+    </section>
+
+    <section class="ergebnis">
+      <div id="karten" class="karten"></div>
+      <div class="aktionen">
+        <button class="btn pine" id="laden3mf" type="button" disabled>3MF für Bambu Studio herunterladen</button>
+        <label class="farbig"><input type="checkbox" id="farbig"> Teile farbig zeigen</label>
+      </div>
+      <p class="klein">Die Datei enthält alle Kugeln <b>umgedreht</b> (Schauseite liegt auf der Platte), richtig verteilt auf der P1S-Platte. In Bambu Studio öffnen → slicen → drucken.</p>
+    </section>
+  </main>
+
+  <script src="../vendor/opentype.min.js"></script>
+  <script src="../vendor/clipper.js"></script>
+  <script src="../vendor/earcut.min.js"></script>
+  <script type="module" src="app.js?v=1"></script>
+</body>
+</html>
