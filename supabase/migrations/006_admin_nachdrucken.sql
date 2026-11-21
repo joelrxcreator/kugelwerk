@@ -1,0 +1,6 @@
+-- Backoffice: neue Aktion "nachdrucken" in admin_set_order_status
+-- (Bestellung zurück in die Warteschlange: alle Kugeln wieder "wartet", Status "bezahlt").
+-- Vollständige Funktion siehe Datenbank; Änderung gegenüber 003: zusätzlicher Zweig
+--   elsif p_status = 'nachdrucken' then
+--     update public.items set status = 'wartet', plate_id = null where order_id = o.id;
+--     update public.orders set status = 'bezahlt', ready_at = null, picked_at = null where id = o.id and paid_at is not null;

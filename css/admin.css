@@ -304,3 +304,49 @@ body { background: var(--bg); min-height: 100vh; }
 .seg { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line); flex: none; }
 .seg button { border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 14px; font-weight: 650; height: 38px; min-width: 44px; padding: 0 12px; border-radius: 9px; cursor: pointer; }
 .seg button[aria-checked="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+
+/* ===== Ruhiges Aktualisieren: keine Einblend-Animation bei jedem Neuzeichnen ===== */
+.ocard { animation: none; }
+.ocard.new { animation: pop .35s var(--ease); }
+
+/* Status-Marken (sehen anders aus als Knöpfe) */
+.stchip { display: inline-flex; align-items: center; height: 22px; padding: 1px 9px 0; border-radius: 6px; font-size: 12px; font-weight: 700; letter-spacing: .02em; background: var(--bg-2); color: var(--ink-2); white-space: nowrap; }
+.stchip.big { height: 30px; font-size: 14px; padding: 1px 12px 0; border-radius: 8px; }
+.st-bezahlt { background: var(--accent-tint); color: var(--accent); }
+.st-fertig { background: var(--pine-tint); color: var(--pine); }
+.st-abgeholt { background: var(--bg-2); color: var(--ink-3); }
+.st-unbezahlt { background: var(--warn-tint); color: var(--warn); }
+.st-verfallen, .st-storniert { background: var(--danger-tint); color: var(--danger); }
+.rcard .btn { white-space: nowrap; }
+.rcard .names small { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.done-row { gap: 12px; }
+.done-row .btn { min-height: 34px; }
+
+/* Suche */
+.search { position: relative; flex: 0 1 220px; min-width: 150px; }
+.search input { -webkit-appearance: none; appearance: none; width: 100%; height: 40px; border-radius: 12px; border: 0; box-shadow: inset 0 0 0 1px var(--line-2); background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; padding: 0 12px 0 36px; outline: none; }
+.search input:focus { box-shadow: inset 0 0 0 2px var(--accent); }
+.search-ico { position: absolute; left: 11px; top: 11px; color: var(--ink-3); }
+.search-ico .ico { width: 18px; height: 18px; }
+.search-pop { position: absolute; top: 46px; left: 0; width: 340px; background: var(--surface); border-radius: 14px; box-shadow: var(--shadow-2), inset 0 0 0 1px var(--line); padding: 6px; z-index: 40; }
+.hit { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; padding: 10px; border-radius: 10px; cursor: pointer; font: inherit; color: var(--ink); text-align: left; }
+.hit:hover { background: var(--bg-2); }
+.hit .no { font-weight: 800; color: var(--accent); width: 36px; }
+.hit .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.hit.none { color: var(--ink-3); cursor: default; }
+
+/* Bestell-Details */
+.od-status { display: flex; align-items: center; justify-content: space-between; margin: 14px 4px 4px; }
+.od-status b { font-size: 24px; font-weight: 800; }
+.od-times { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.od-times div { background: var(--surface); border-radius: 12px; padding: 10px; box-shadow: inset 0 0 0 1px var(--line); }
+.od-times small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); }
+.od-times b { font-size: 15px; }
+.od-name { font-size: 18px !important; }
+.od-actions { display: grid; gap: 10px; }
+.od-actions .btn { width: 100%; }
+.od-none { color: var(--ink-3); padding: 6px; }
+.rcard { flex-wrap: wrap; row-gap: 10px; }
+.rcard .names { flex: 1 1 0; min-width: 0; }
+.ractions { display: flex; gap: 8px; justify-content: flex-end; width: 100%; }
+.ractions .btn.small { min-height: 40px; }
