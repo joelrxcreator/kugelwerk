@@ -1,0 +1,3 @@
+-- Fehlversuche beim Kassen-Code wirklich zählen: Fehler als JSON zurückgeben statt raise
+-- (raise rollt die Zählung zurück, damit wäre die Sperre nach 8 Versuchen wirkungslos)
+-- Inhalt: siehe Funktion public.confirm_payment in der Datenbank (gleich wie 003, aber mit jsonb {error} statt raise)

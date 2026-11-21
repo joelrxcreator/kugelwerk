@@ -581,7 +581,7 @@
     if (!pending.length) return false;
     let ok = null, err = null;
     for (const o of pending) {
-      try { const r = await rpc('confirm_payment', { p_token: o.token, p_code: code }); Object.assign(o, r); if (o.status === 'bezahlt') ok = ok || o; }
+      try { const r = await rpc('confirm_payment', { p_token: o.token, p_code: code }); if (r && r.error) { const e = new Error(r.error); e.code = r.error; throw e; } Object.assign(o, r); if (o.status === 'bezahlt') ok = ok || o; }
       catch (e) { err = e; }
     }
     if (ok) { confetti(); go('order', ok.token); toast('Bezahlt! Wir starten deinen Druck.'); return true; }
