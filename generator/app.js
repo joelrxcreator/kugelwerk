@@ -1,11 +1,11 @@
 // Bedienoberfläche des 3D-Generators.
 // Aufruf aus dem Backoffice: generator/?titel=Drucker%201&kugeln=[{"nr":"#07","name":"Emma","motiv":"herzen"}]
 
-import { schriftLaden, schriftSpeichern } from './js/schrift.js';
-import { baueKugel } from './js/kugel.js';
-import { vorschauSvg } from './js/vorschau.js';
-import { platte3mf, stl } from './js/export.js';
-import { MOTIVE, STANDARD } from './js/einstellungen.js';
+import { schriftLaden, schriftSpeichern } from './js/schrift.js?v=2';
+import { baueKugel } from './js/kugel.js?v=2';
+import { vorschauSvg } from './js/vorschau.js?v=2';
+import { platte3mf, stl } from './js/export.js?v=2';
+import { MOTIVE, STANDARD } from './js/einstellungen.js?v=2';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

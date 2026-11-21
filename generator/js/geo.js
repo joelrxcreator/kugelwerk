@@ -171,3 +171,14 @@ export function verbindung(a, b) {
   };
   return Math.min(sehnen(a, b), sehnen(b, a));
 }
+
+// Teilstücke einer Linie, die innerhalb einer Form liegen: [[p,q], ...]
+export function linieInForm(linie, form) {
+  const L = C();
+  const c = new L.Clipper();
+  c.AddPath(zuClipper([linie])[0], L.PolyType.ptSubject, false);
+  c.AddPaths(zuClipper(form), L.PolyType.ptClip, true);
+  const tree = new L.PolyTree();
+  c.Execute(L.ClipType.ctIntersection, tree, L.PolyFillType.pftNonZero, L.PolyFillType.pftNonZero);
+  return L.Clipper.OpenPathsFromPolyTree(tree).map(p => [[p[0].X / SK, p[0].Y / SK], [p[p.length - 1].X / SK, p[p.length - 1].Y / SK]]);
+}

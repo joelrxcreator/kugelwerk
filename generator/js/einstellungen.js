@@ -7,44 +7,50 @@ export const STANDARD = {
   zielVerbindung: 1.2,   // so breit versuchen wir sie zu machen
   brueckePunkt: 1.0,     // Breite der Brücke zu i-Punkten / Umlaut-Punkten
   brueckeBuchstabe: 1.6, // Breite der Brücke zwischen Buchstaben (z. B. W -> i)
-  maxBruecke: 2.5,       // längere Lücken zwischen Buchstaben werden nicht überbrückt (Teil hängt dann am Motiv)
+  kleineLuecke: 1.5,     // so kleine Lücken (T-/F-Balken, J -> ü) werden direkt an der engsten Stelle überbrückt
+  maxBruecke: 3.5,       // größere Lücken nur unten an der Grundlinie überbrücken (wie W -> i bei „Wilma“)
+  grundlinie: 0.4,       // „unten“ = unteres 40 % des Namens
   maxSchieben: 3,        // so weit darf ein abgesetzter Anfangs-/Endbuchstabe rangeschoben werden
   maxBeruehrung: 3.5,    // berühren sich zwei Buchstaben breiter, kleben sie aneinander -> nicht schieben
   abstandRing: 2.0,      // Name hält mindestens so viel Abstand zum Ring
   nameMaxBreite: 80,     // größte Namensbreite
   nameMaxHoehe: 36,      // größte Namenshöhe
   randAussen: 0.4,       // Motive bleiben so weit innerhalb der Außenkante
-  glaetten: 0.25,        // kleine Ritzen < 0,5 mm werden geschlossen
+  glaetten: 0,           // Ritzen schließen: aus (Joel will keine Extra-Striche, z. B. im „a“)
   plattenGroesse: 256,   // Bambu Lab P1S
   plattenAbstand: 6,     // Abstand zwischen Kugeln auf der Platte
 };
 
 // Motive: welche Teile wo sitzen. winkel in Grad (0 = rechts, 90 = oben).
 // haupt = berührt Ring UND Namen (hält den Namen), neben = nur Schmuck am Ring.
+// drehen = wie weit ein Teil schräg gestellt werden darf (Glanzsterne & Herzen nie).
+// drehZiel = bevorzugte Schräglage (Pfoten zeigen schöner leicht unterschiedlich).
+// innenFrei = der Ring darf nicht durch das Innere des Motivs laufen (Herzen, Pfoten, Stern-Umriss).
+// Das Programm probiert beide Diagonalen (unten links/oben rechts und oben links/unten rechts) und nimmt die schönere.
 export const MOTIVE = {
-  schneeflocken: { titel: 'Schneeflocken', teile: [
+  schneeflocken: { titel: 'Schneeflocken', drehen: 20, teile: [
     { teil: 'schneeflocke', winkel: 45, haupt: true },
     { teil: 'schneeflocke', winkel: 225, haupt: true },
   ] },
-  herzen: { titel: 'Herzen', teile: [
+  herzen: { titel: 'Herzen', drehen: 0, innenFrei: true, teile: [
     { teil: 'herz-paar', winkel: 135, haupt: true },
     { teil: 'herz-paar', winkel: -45, haupt: true },
   ] },
-  glanzsterne: { titel: 'Glanzsterne', teile: [
+  glanzsterne: { titel: 'Glanzsterne', drehen: 0, teile: [
     { teil: 'glanz-gross', winkel: 135, haupt: true },
     { teil: 'glanz-gross', winkel: -45, haupt: true },
     { teil: 'glanz-klein', winkel: 50, haupt: false },
     { teil: 'glanz-klein', winkel: -130, haupt: false },
   ] },
-  sterne: { titel: 'Sterne', teile: [
+  sterne: { titel: 'Sterne', drehen: 20, innenFrei: true, teile: [
     { teil: 'stern-voll', winkel: 30, haupt: true },
     { teil: 'stern-voll', winkel: -150, haupt: true },
     { teil: 'stern-umriss', winkel: 125, haupt: false },
     { teil: 'stern-umriss', winkel: -70, haupt: false },
   ] },
-  pfoten: { titel: 'Pfoten', teile: [
-    { teil: 'pfote', winkel: 45, haupt: true },
-    { teil: 'pfote', winkel: 225, haupt: true },
+  pfoten: { titel: 'Pfoten', drehen: 35, innenFrei: true, teile: [
+    { teil: 'pfote', winkel: 45, haupt: true, drehZiel: -18 },
+    { teil: 'pfote', winkel: 225, haupt: true, drehZiel: 15 },
   ] },
 };
 
@@ -52,9 +58,8 @@ export const MOTIVE = {
 export const SUCHE = {
   winkel: 30,       // ± Grad entlang des Rings
   winkelSchritt: 3,
-  drehung: 20,      // ± Grad Eigendrehung (leicht schräg stellen)
-  drehSchritt: 5,
-  nachInnen: 6,     // bis zu so viele mm vom Rand nach innen rücken
-  innenSchritt: 0.75,
+  drehSchritt: 5,   // Eigendrehung in diesen Schritten (Grenze je Motiv: MOTIVE.*.drehen)
+  nachInnen: 8,     // bis zu so viele mm vom Rand nach innen rücken
+  innenSchritt: 0.5,
   groesser: [1, 1.08, 1.16], // nur im Notfall etwas größer
 };

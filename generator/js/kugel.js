@@ -4,9 +4,9 @@
 // 3. Motive diagonal an den Ring setzen, leicht verschieben/drehen, bis sie Ring UND Namen sicher berühren.
 // 4. Alles vereinigen und prüfen (ein Teil, Verbindungen >= 0,8 mm).
 
-import * as G from './geo.js';
-import { STANDARD, MOTIVE, SUCHE } from './einstellungen.js';
-import { nameZuForm } from './schrift.js';
+import * as G from './geo.js?v=2';
+import { STANDARD, MOTIVE, SUCHE } from './einstellungen.js?v=2';
+import { nameZuForm } from './schrift.js?v=2';
 
 const rad = g => g * Math.PI / 180;
 
@@ -55,6 +55,7 @@ function verbindeName(form, cfg, protokoll) {
 
   // Punkte (i, Umlaute) erst ganz am Ende anbinden, wenn alle Buchstaben an ihrem Platz sind
   const punkte = stuecke.filter(istPunkt);
+  const punktFormen = punkte.map(p => p.form);
   stuecke = stuecke.filter(s => !istPunkt(s));
   gruppe.length = stuecke.length;
 
@@ -81,15 +82,21 @@ function verbindeName(form, cfg, protokoll) {
       let richtung = 0;
       if (bk.cx < bg.x0 + 0.25 * bg.b) richtung = 1;        // links -> nach rechts schieben
       else if (bk.cx > bg.x1 - 0.25 * bg.b) richtung = -1;  // rechts -> nach links
+      const klein_ = G.flaeche(fk) < 0.15 * groesste;       // Bindestrich, Balken o. ä.
       let geschoben = false;
-      if (richtung && np.d > 0.05) {
+      // nur Buchstaben nebeneinander schieben (nicht z. B. einen T-Balken über dem Stamm)
+      const nebeneinander = Math.min(bk.y1, bg.y1) - Math.max(bk.y0, bg.y0) > 0.5 * Math.min(bk.h, bg.h);
+      if (richtung && !klein_ && nebeneinander && np.d > 0.05) {
         for (let s = 0.1; s <= cfg.maxSchieben + 1e-9; s += 0.1) {
           const neu = G.verschiebe(fk, richtung * s, 0);
           const v = G.verbindung(neu, fg);
           if (v >= cfg.zielVerbindung) {
-            const ueber = G.flaeche(G.schneide(neu, fg));
-            // nur punktuell berühren – nicht der ganzen Länge nach aneinanderkleben
-            const passt = ueber < 0.12 * G.flaeche(fk) && v <= cfg.maxBeruehrung;
+            const schnitt = G.schneide(neu, fg);
+            // nur an EINER Stelle punktuell berühren, nicht der Länge nach ankleben,
+            // und nicht in einen i-Punkt hineinrutschen (wie bei "Wilma")
+            const passt = G.teile(schnitt).length === 1 && v <= cfg.maxBeruehrung &&
+              G.flaeche(schnitt) < 0.12 * G.flaeche(fk) &&
+              !punktFormen.some(pf => G.schneide(neu, G.versatz(pf, 0.6)).length);
             if (passt) {
               stuecke.forEach((st, i) => { if (wurzel(i) === klein) st.form = G.verschiebe(st.form, richtung * s, 0); });
               for (const br of bruecken) if (br.gruppe !== undefined && wurzel(br.gruppe) === klein) br.form = G.verschiebe(br.form, richtung * s, 0);
@@ -105,14 +112,24 @@ function verbindeName(form, cfg, protokoll) {
         const vorher = G.verbindung(fk, fg);
         if (vorher >= cfg.zielVerbindung) {
           protokoll.push('Buchstaben berühren sich schon');
-        } else if (np.d <= cfg.maxBruecke) {
+        } else if (np.d <= cfg.kleineLuecke || (klein_ && np.d <= cfg.maxBruecke)) {
+          // winzige Lücke (T-Balken) oder kleines Zeichen (Bindestrich): an der engsten Stelle
           const br = brueckeZwischen(fk, fg, cfg.brueckeBuchstabe);
-          br.gruppe = klein;
-          bruecken.push(br);
-          protokoll.push(`Brücke zwischen Buchstaben (${np.d.toFixed(1)} mm Lücke)`);
+          br.gruppe = klein; bruecken.push(br);
+          protokoll.push(`Kleine Brücke (${np.d.toFixed(1)} mm Lücke)`);
         } else {
-          protokoll.push(`Lücke ${np.d.toFixed(1)} mm – Teil bleibt getrennt und hängt an einem Motiv (wie bei „Tina“)`);
-          // nicht verbinden, aber trotzdem gruppieren, damit die Schleife endet
+          // größere Lücke: Brücke unten an der Grundlinie (wie Joel bei "Wilma": W unten -> i)
+          const nb = G.grenzen(stuecke.flatMap(x => x.form));
+          const unten = [[[nb.x0 - 5, nb.y0 - 5], [nb.x1 + 5, nb.y0 - 5], [nb.x1 + 5, nb.y0 + cfg.grundlinie * nb.h], [nb.x0 - 5, nb.y0 + cfg.grundlinie * nb.h]]];
+          const uk = G.schneide(fk, unten), ug = G.schneide(fg, unten);
+          const npu = uk.length && ug.length ? G.naechstePunkte(uk, ug) : { d: Infinity };
+          if (npu.d <= cfg.maxBruecke) {
+            const br = brueckeVon(npu, cfg.brueckeBuchstabe);
+            br.gruppe = klein; bruecken.push(br);
+            protokoll.push(`Brücke unten zwischen Buchstaben (${npu.d.toFixed(1)} mm Lücke)`);
+          } else {
+            protokoll.push(`Lücke ${np.d.toFixed(1)} mm – Teil bleibt getrennt und hängt an einem Motiv (wie bei „Tina“)`);
+          }
         }
       }
     }
@@ -120,7 +137,7 @@ function verbindeName(form, cfg, protokoll) {
   }
   const buchstaben = stuecke.flatMap(s => s.form);
   for (const pk of punkte) {
-    bruecken.push(brueckeVon(punktZiel(pk.form, buchstaben), cfg.brueckePunkt));
+    bruecken.push(punktBruecke(pk.form, buchstaben, cfg.brueckePunkt));
     protokoll.push('i-/Umlaut-Punkt mit dünner Brücke verbunden');
   }
   const alle = buchstaben.concat(...punkte.map(p => p.form));
@@ -145,6 +162,23 @@ function punktZiel(punkt, rest) {
   }
   if (!isFinite(best.d)) return G.naechstePunkte(punkt, rest);
   return best;
+}
+
+// Brücke vom i-Punkt genau mittig in den Stängel darunter (Mitte Punkt -> Mitte Stängel)
+function punktBruecke(punkt, buchstaben, breite) {
+  const ziel = punktZiel(punkt, buchstaben);
+  const [cx, cy] = G.schwerpunkt(punkt);
+  // Querschnitt des Stängels etwas unterhalb seiner Spitze messen und dessen Mitte nehmen
+  const tiefe = 1.4, neigung = 0.3;
+  const y = ziel.b[1] - tiefe, xErwartet = ziel.b[0] - neigung * tiefe;
+  const strecken = G.linieInForm([[xErwartet - 6, y], [xErwartet + 6, y]], buchstaben);
+  let mitte = null;
+  for (const [p, q] of strecken) {
+    const m = [(p[0] + q[0]) / 2, y];
+    if (!mitte || Math.abs(m[0] - xErwartet) < Math.abs(mitte[0] - xErwartet)) mitte = m;
+  }
+  if (!mitte) return brueckeVon(ziel, breite);
+  return { form: G.kapsel([cx, cy], mitte, breite), von: [cx, cy], bis: mitte, breite };
 }
 
 function brueckeZwischen(a, b, breite) {
@@ -173,8 +207,16 @@ function maxRadius(form, u, R) {
   return r;
 }
 
+// Innenräume eines Motivs (Löcher + enge Buchten), durch die der Ring nicht laufen soll
+function innenraeume(flaechen) {
+  const roh = flaechen.flat();
+  const aussen = G.vereinige(flaechen.map(f => f[0]));
+  const zu = G.versatz(G.versatz(roh, 1.5), -1.5);
+  return G.ohne(G.vereinige(aussen.concat(zu)), roh);
+}
+
 function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = name) {
-  const { flaechen, winkel: w0, haupt } = stueck;
+  const { flaechen, luecken, winkel: w0, haupt, drehMax = 0, drehZiel = 0 } = stueck;
   const roh = flaechen.flat();
   let best = null;
 
@@ -182,6 +224,7 @@ function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = na
   const ausschnitt = (form, b) => G.schneide(form, [[[b.x0 - 1, b.y0 - 1], [b.x1 + 1, b.y0 - 1], [b.x1 + 1, b.y1 + 1], [b.x0 - 1, b.y1 + 1]]]);
   const ueberlappt = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
   const belegtB = belegt.map(f => ({ f, b: G.grenzen(f) }));
+  const lage = (f, dreh, k, u, r) => G.verschiebe(G.skaliere(G.drehe(f, dreh), k), u[0] * r, u[1] * r);
 
   const pruefe = (w, dreh, k, d) => {
     let form = G.skaliere(G.drehe(roh, dreh), k);
@@ -191,6 +234,9 @@ function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = na
     form = G.verschiebe(form, u[0] * r, u[1] * r);
     const b = G.grenzen(form);
     for (const x of belegtB) if (ueberlappt(b, x.b) && G.flaeche(G.schneide(form, x.f)) > 0.05) return null;
+    const ringNah = ausschnitt(ring, b);
+    // Ring darf nicht durch Herz/Pfote/Stern-Umriss schneiden
+    if (luecken && luecken.length && G.flaeche(G.schneide(lage(luecken, dreh, k, u, r), ringNah)) > 0.3) return null;
     const nameNah = ausschnitt(name, b);
     const ueber = nameNah.length ? G.flaeche(G.schneide(form, nameNah)) : 0;
     let vName = 0;
@@ -201,13 +247,12 @@ function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = na
       vName = G.verbindung(form, zielNah);
       if (vName < cfg.minVerbindung) return null;
     } else if (ueber > 0.3) return null;
-    const ringNah = ausschnitt(ring, b);
     const vRing = G.verbindung(form, ringNah);
     if (vRing < cfg.minVerbindung) return null;
     // Einzelflächen (z. B. beide Herzen) müssen jeweils sicher hängen
     if (flaechen.length > 1) {
       const alle = ringNah.concat(nameNah);
-      const einzel = flaechen.map(f => G.verschiebe(G.skaliere(G.drehe(f, dreh), k), u[0] * r, u[1] * r));
+      const einzel = flaechen.map(f => lage(f, dreh, k, u, r));
       for (let i = 0; i < einzel.length; i++) {
         if (G.verbindung(einzel[i], alle) >= cfg.minVerbindung) continue;
         const rest = einzel.filter((_, j) => j !== i).flat();
@@ -215,28 +260,31 @@ function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = na
       }
     }
     const schwach = Math.min(vRing, haupt ? vName : 99) < cfg.zielVerbindung ? 15 : 0;
-    const wert = Math.abs(w - w0) * 0.25 + Math.abs(dreh) * 0.12 + d * 1.5 + (k - 1) * 120 + ueber * 0.06 + schwach;
+    const wert = Math.abs(w - w0) * 0.25 + Math.abs(dreh - drehZiel) * 0.12 + d * 1.2 + (k - 1) * 120 + ueber * 0.06 + schwach;
     return { form, wert, winkel: w, drehung: dreh, groesse: k, nachInnen: d, vRing, vName, ueber };
   };
 
-  // grob suchen, dann um den besten Treffer fein nachsuchen
   const bereich = (mitte, weite, schritt) => {
     const l = [];
     for (let x = -weite; x <= weite + 1e-9; x += schritt) l.push(mitte + x);
     return l;
   };
+  const drehungen = drehMax ? bereich(0, drehMax, SUCHE.drehSchritt * 2) : [0];
   const besser = e => { if (e && (!best || e.wert < best.wert)) best = e; };
   for (const k of SUCHE.groesser) {
+    // grob suchen …
     for (let d = 0; d <= SUCHE.nachInnen + 1e-9 && !best; d += SUCHE.innenSchritt) {
       for (const w of bereich(w0, SUCHE.winkel, SUCHE.winkelSchritt * 2))
-        for (const dr of bereich(0, SUCHE.drehung, SUCHE.drehSchritt * 2)) besser(pruefe(w, dr, k, d));
+        for (const dr of drehungen) besser(pruefe(w, dr, k, d));
     }
+    // … dann um den besten Treffer fein nachsuchen
     if (best) {
       const g = best;
+      const feinD = drehMax ? bereich(g.drehung, SUCHE.drehSchritt * 2, SUCHE.drehSchritt) : [0];
       for (const w of bereich(g.winkel, SUCHE.winkelSchritt * 2, SUCHE.winkelSchritt))
-        for (const dr of bereich(g.drehung, SUCHE.drehSchritt * 2, SUCHE.drehSchritt))
-          for (const d of [g.nachInnen, Math.max(0, g.nachInnen - SUCHE.innenSchritt / 2)]) {
-            if (Math.abs(w - w0) <= SUCHE.winkel && Math.abs(dr) <= SUCHE.drehung) besser(pruefe(w, dr, k, d));
+        for (const dr of feinD)
+          for (const d of [g.nachInnen, Math.max(0, g.nachInnen - SUCHE.innenSchritt / 2), g.nachInnen + SUCHE.innenSchritt / 2]) {
+            if (Math.abs(w - w0) <= SUCHE.winkel && Math.abs(dr) <= drehMax) besser(pruefe(w, dr, k, d));
           }
       break;
     }
@@ -291,28 +339,41 @@ export function baueKugel({ font, teileDaten, name, motiv, einstellungen = {} })
   const nb = G.grenzen(nameForm);
   protokoll.unshift(`Name ${nb.b.toFixed(1)} × ${nb.h.toFixed(1)} mm`);
 
-  // Motive
+  // Motive: beide Diagonalen probieren und die schönere nehmen
   const def = MOTIVE[motiv];
   if (!def) throw new Error('Unbekanntes Motiv: ' + motiv);
-  const motive = [];
-  const belegt = [];
-  const reihenfolge = def.teile.map((t, i) => ({ ...t, i })).sort((a, b) => b.haupt - a.haupt);
-  // Besteht der Name aus mehreren Teilen (z. B. "T" + "ina"), braucht jedes Teil ein eigenes Motiv als Halt
-  const ziele = zieleVerteilen(G.teile(nameForm), reihenfolge.filter(t => t.haupt), innen);
-  if (ziele.fehlt) protokoll.push('Name hat mehr Teile als Motive – bitte prüfen');
-  for (const t of reihenfolge) {
-    const flaechen = teilForm(teileDaten, t.teil);
-    const ziel = t.haupt && ziele.zu ? ziele.zu.get(t) : nameForm;
-    const erg = platziere({ flaechen, winkel: t.winkel, haupt: t.haupt }, ring, nameForm, belegt, innen, aussen, cfg, ziel);
-    if (erg) {
-      belegt.push(erg.form);
-      motive.push({ ...t, ...erg });
-      if (erg.groesse > 1) protokoll.push(`${t.teil} etwas größer (${Math.round(erg.groesse * 100)} %)`);
-    } else {
-      motive.push({ ...t, form: null });
-      protokoll.push(`Kein guter Platz für ${t.teil} gefunden`);
+  const teilCache = {};
+  const teilDaten = name => (teilCache[name] ||= (() => {
+    const flaechen = teilForm(teileDaten, name);
+    return { flaechen, luecken: def.innenFrei ? innenraeume(flaechen) : null };
+  })());
+  const varianten = [def.teile, def.teile.map(t => ({ ...t, winkel: 180 - t.winkel, drehZiel: -(t.drehZiel || 0) }))];
+  let motive = null, wahl = null;
+  for (const [vi, teile] of varianten.entries()) {
+    const m = [], belegt = [], p = [];
+    const reihenfolge = teile.map((t, i) => ({ ...t, i })).sort((a, b) => b.haupt - a.haupt);
+    // Besteht der Name aus mehreren Teilen (z. B. "T" + "ina"), braucht jedes Teil ein eigenes Motiv als Halt
+    const ziele = zieleVerteilen(G.teile(nameForm), reihenfolge.filter(t => t.haupt), innen);
+    if (ziele.fehlt) p.push('Name hat mehr Teile als Motive – bitte prüfen');
+    let summe = 0;
+    for (const t of reihenfolge) {
+      const ziel = t.haupt && ziele.zu ? ziele.zu.get(t) : nameForm;
+      const erg = platziere({ ...teilDaten(t.teil), winkel: t.winkel, haupt: t.haupt, drehMax: def.drehen || 0, drehZiel: t.drehZiel || 0 },
+        ring, nameForm, belegt, innen, aussen, cfg, ziel);
+      if (erg) {
+        belegt.push(erg.form);
+        m.push({ ...t, ...erg });
+        summe += erg.wert;
+        if (erg.groesse > 1) p.push(`${t.teil} etwas größer (${Math.round(erg.groesse * 100)} %)`);
+      } else {
+        m.push({ ...t, form: null });
+        summe += 1000;
+        p.push(`Kein guter Platz für ${t.teil} gefunden`);
+      }
     }
+    if (!wahl || summe < wahl.summe) { wahl = { summe, p, vi }; motive = m; }
   }
+  protokoll.push(...wahl.p, wahl.vi ? 'Motive: oben links / unten rechts' : 'Motive: unten links / oben rechts');
 
   // Alles vereinigen, kleine Ritzen schließen
   let gesamt = G.vereinige(ring.concat(nameForm, ...motive.filter(m => m.form).map(m => m.form)));
