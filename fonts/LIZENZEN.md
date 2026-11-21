@@ -1,5 +1,4 @@
-Alle Schriften stehen unter der SIL Open Font License 1.1 (Text: OFL.txt):
-- Italiana (Santiago Orozco) – Überschriften
-- Josefin Sans (The Josefin Sans Project Authors) – Untertitel
-- kugelschrift-*.woff2 = Damion (The Damion Project Authors) – Vorschau der Namen,
-  ähnlicher freier Ersatz für „Heartland Script“ (kommerziell, nur mit passender Web-Lizenz einsetzen).
+- Italiana (Santiago Orozco) – Überschriften – SIL Open Font License 1.1 (OFL.txt)
+- Josefin Sans (The Josefin Sans Project Authors) – Untertitel – SIL Open Font License 1.1 (OFL.txt)
+- kugelschrift.woff2 = „Heartland Script“ © NREY (creativemarket.com/NREY), von Joel lizenziert.
+  Nur als Web-Teilmenge für die Namensvorschau eingebunden. Nicht weitergeben/anderweitig verwenden.

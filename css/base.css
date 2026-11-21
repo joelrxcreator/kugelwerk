@@ -7,10 +7,9 @@
 @font-face { font-family: 'Josefin Sans'; font-weight: 600; font-display: swap; src: url(../fonts/josefin-latin-ext-600.woff2) format('woff2'); unicode-range: U+0100-02AF,U+1E00-1E9F; }
 @font-face { font-family: 'Josefin Sans'; font-weight: 700; font-display: swap; src: url(../fonts/josefin-latin-ext-700.woff2) format('woff2'); unicode-range: U+0100-02AF,U+1E00-1E9F; }
 
-/* Schrift der Namen auf der Kugel. Aktuell "Damion" (SIL OFL, frei) als ähnlicher Ersatz für Heartland Script.
-   Für den Tausch nur die zwei Dateien fonts/kugelschrift-*.woff2 ersetzen. */
-@font-face { font-family: 'Kugelschrift'; font-weight: 400; font-display: swap; src: url(../fonts/kugelschrift-latin.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD; }
-@font-face { font-family: 'Kugelschrift'; font-weight: 400; font-display: swap; src: url(../fonts/kugelschrift-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02AF,U+1E00-1E9F; }
+/* Schrift der Namen auf der Kugel: "Heartland Script" von NREY (gekauft über Creative Market).
+   Nur als Web-Teilmenge (Buchstaben für Namen) eingebunden – die Original-Datei liegt NICHT im Repo. */
+@font-face { font-family: 'Kugelschrift'; font-weight: 400; font-display: swap; src: url(../fonts/kugelschrift.woff2?v=2) format('woff2'); }
 :root {
   color-scheme: light;
   /* Farben wie im Flyer "Lohmarer Weihnachtsmarkt" */

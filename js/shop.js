@@ -207,7 +207,7 @@
           <input id="nameInput" class="input" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false"
             enterkeyhint="done" maxlength="${MAX_NAME}" placeholder="Name eingeben, z. B. Emma" value="${esc(it.name)}" aria-label="Name für Kugel ${i + 1}">
           <div class="name-hint" id="nameHint">${it.name ? '' : 'Vorname oder Spitzname – max. 16 Zeichen.'}</div>
-          <div class="name-preview ${it.name ? '' : 'empty'}" id="namePrev" aria-hidden="true"><span>${esc(it.name) || 'Dein Name'}</span><small>So ungefähr sieht die Schrift auf der Kugel aus</small></div>
+          <div class="name-preview ${it.name ? '' : 'empty'}" id="namePrev" aria-hidden="true"><span>${esc(it.name) || 'Dein Name'}</span><small>In dieser Schrift kommt dein Name auf die Kugel</small></div>
         </div>
         <div>
           <div class="eyebrow" style="margin:0 2px 10px">Motiv wählen</div>
