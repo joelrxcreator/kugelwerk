@@ -6,18 +6,23 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Backoffice · Namenskugeln</title>
   <meta name="theme-color" content="#fffbf3">
+  <script>
+    // Darstellung vor dem ersten Zeichnen setzen (kein helles Aufblitzen)
+    (function () { var t = 'auto'; try { t = JSON.parse(localStorage.getItem('kw.theme')) || 'auto'; } catch (e) { }
+      document.documentElement.setAttribute('data-theme', t); })();
+  </script>
   <link rel="icon" href="img/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/base.css?v=4">
-  <link rel="stylesheet" href="css/admin.css?v=4">
+  <link rel="stylesheet" href="css/base.css?v=5">
+  <link rel="stylesheet" href="css/admin.css?v=5">
 </head>
 <body>
   <div id="root"></div>
   <div class="toast" id="toast" role="status"></div>
-  <script src="js/config.js?v=4"></script>
-  <script src="js/api.js?v=4"></script>
-  <script src="js/icons.js?v=4"></script>
+  <script src="js/config.js?v=5"></script>
+  <script src="js/api.js?v=5"></script>
+  <script src="js/icons.js?v=5"></script>
   <script src="vendor/qrcode.js"></script>
-  <script src="js/admin.js?v=4"></script>
+  <script src="js/admin.js?v=5"></script>
 </body>
 </html>

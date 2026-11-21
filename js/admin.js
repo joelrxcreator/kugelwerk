@@ -195,7 +195,8 @@
       <span class="live ${stale ? 'off' : ''}">${stale ? 'Keine Verbindung' : 'Live'}</span>
       <button class="tbtn ${st.accepting ? 'on' : 'off'}" id="accBtn" title="Neue Bestellungen annehmen">${st.accepting ? 'Offen' : 'Pausiert'}</button>
       <div class="stepper" title="Zusätzliche Wartezeit für Kunden"><button id="exMinus" aria-label="5 Minuten weniger">−</button><span>${st.extra_minutes >= 0 ? '+' : ''}${st.extra_minutes} Min.</span><button id="exPlus" aria-label="5 Minuten mehr">+</button></div>
-      <button class="tbtn icon ${S.wake ? 'on' : ''}" id="wakeBtn" title="Bildschirm wach halten">${I('sun')}</button>
+      <button class="tbtn icon" id="themeBtn" title="Hell / Dunkel umschalten">${I('moon')}</button>
+      <button class="tbtn icon ${S.wake ? 'on' : ''}" id="wakeBtn" title="Bildschirm wach halten">${I('monitor')}</button>
       <button class="tbtn icon" id="sndBtn" title="Ton bei neuen Bestellungen">${I(S.sound ? 'bell' : 'bellOff')}</button>
       <button class="tbtn icon" id="setBtn" title="Einstellungen">${I('settings')}</button>
     </header>
@@ -350,6 +351,10 @@
       catch { const r = document.createRange(); const n = el.previousElementSibling; r.selectNodeContents(n); getSelection().removeAllRanges(); getSelection().addRange(r); toast('Markiert – mit ⌘C kopieren'); }
     });
     on('#wakeBtn', toggleWake);
+    on('#themeBtn', () => {
+      const t = getTheme(), dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+      setTheme(dark ? 'light' : 'dark'); toast(dark ? 'Helles Design' : 'Dunkles Design');
+    });
     on('[data-abort]', async el => {
       if (await dialog({ title: 'Druck abbrechen?', text: 'Die Kugeln kommen zurück in die Warteschlange.', ok: 'Abbrechen & zurücklegen', cancel: 'Weiter drucken', danger: true }))
         act('admin_cancel_plate', { p_plate: el.dataset.abort }, 'Zurück in der Warteschlange');
@@ -409,6 +414,10 @@
     dr.innerHTML = `
       <div class="drawer-head"><h2>Einstellungen</h2><button class="tbtn icon" data-x>${I('x')}</button></div>
       <div class="drawer-body">
+        <div class="group-title">Darstellung (nur Backoffice)</div>
+        <div class="group"><div class="row"><div class="lbl"><b>Design</b><small>Die Kundenseite bleibt immer hell.</small></div>
+          <div class="seg" role="radiogroup" aria-label="Design">${[['auto', 'Automatisch'], ['light', 'Hell'], ['dark', 'Dunkel']].map(([k, l]) => `<button role="radio" aria-checked="${getTheme() === k}" data-theme-set="${k}">${l}</button>`).join('')}</div></div></div>
+
         <div class="group-title">QR-Codes zum Drucken</div>
         <div class="group">
           <div class="qr-box"><div class="qr">${qrSvg(shop)}</div><div class="info"><b>Bestell-Code (für den Stand)</b><code>${esc(shop)}</code>
@@ -474,6 +483,10 @@
       const code = String(Math.floor(1000 + Math.random() * 9000));
       if (await act('admin_update_settings', { p_patch: { pay_code: code } }, 'Neuer Kassen-Code: ' + code)) { close(); setTimeout(openSettings, 400); }
     };
+    dr.querySelectorAll('[data-theme-set]').forEach(b => b.onclick = () => {
+      setTheme(b.dataset.themeSet);
+      dr.querySelectorAll('[data-theme-set]').forEach(x => x.setAttribute('aria-checked', x === b));
+    });
     const bindClosing = () => dr.querySelectorAll('[data-cdel]').forEach(b => b.onclick = () => b.closest('.closing-row').remove());
     bindClosing();
     $('#addDay', dr).onclick = () => { const last = [...dr.querySelectorAll('.closing-row')].pop(); last.insertAdjacentHTML('afterend', closingRows({ '': '' }).replace('value=""', 'value=""')); bindClosing(); };
@@ -529,6 +542,19 @@
     });
     return out;
   }
+  function getTheme() { return store.get('kw.theme', 'auto'); }
+  function setTheme(t) {
+    store.set('kw.theme', t);
+    document.documentElement.setAttribute('data-theme', t);
+    syncThemeColor();
+  }
+  function syncThemeColor() {
+    const t = getTheme(), dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = dark ? '#14150f' : '#fffbf3';
+  }
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeColor);
+  syncThemeColor();
+
   let wakeLock = null;
   async function toggleWake() {
     try {
