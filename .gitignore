@@ -4,3 +4,4 @@ node_modules/
 .env*
 *.otf
 *.ttf
+*.whl
