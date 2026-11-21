@@ -26,13 +26,14 @@ export const STANDARD = {
 // drehen = wie weit ein Teil schräg gestellt werden darf (Glanzsterne & Herzen nie).
 // drehZiel = bevorzugte Schräglage (Pfoten zeigen schöner leicht unterschiedlich).
 // innenFrei = der Ring darf nicht durch das Innere des Motivs laufen (Herzen, Pfoten, Stern-Umriss).
+// spiegeln = Aufschlag für die andere Diagonale (Herzen passen meist besser oben links / unten rechts).
 // Das Programm probiert beide Diagonalen (unten links/oben rechts und oben links/unten rechts) und nimmt die schönere.
 export const MOTIVE = {
   schneeflocken: { titel: 'Schneeflocken', drehen: 20, teile: [
     { teil: 'schneeflocke', winkel: 45, haupt: true },
     { teil: 'schneeflocke', winkel: 225, haupt: true },
   ] },
-  herzen: { titel: 'Herzen', drehen: 0, innenFrei: true, teile: [
+  herzen: { titel: 'Herzen', drehen: 0, innenFrei: true, spiegeln: 10, teile: [
     { teil: 'herz-paar', winkel: 135, haupt: true },
     { teil: 'herz-paar', winkel: -45, haupt: true },
   ] },
@@ -60,6 +61,6 @@ export const SUCHE = {
   winkelSchritt: 3,
   drehSchritt: 5,   // Eigendrehung in diesen Schritten (Grenze je Motiv: MOTIVE.*.drehen)
   nachInnen: 8,     // bis zu so viele mm vom Rand nach innen rücken
-  innenSchritt: 0.5,
+  innenSchritt: 1,
   groesser: [1, 1.08, 1.16], // nur im Notfall etwas größer
 };

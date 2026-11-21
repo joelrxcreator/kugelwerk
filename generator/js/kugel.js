@@ -225,8 +225,24 @@ function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = na
   const ueberlappt = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
   const belegtB = belegt.map(f => ({ f, b: G.grenzen(f) }));
   const lage = (f, dreh, k, u, r) => G.verschiebe(G.skaliere(G.drehe(f, dreh), k), u[0] * r, u[1] * r);
+  // Ring/Name nur einmal pro Winkel zuschneiden (spart sehr viel Rechenzeit)
+  let radius = 0;
+  for (const p of roh) for (const [x, y] of p) radius = Math.max(radius, Math.hypot(x, y));
+  radius *= Math.max(...SUCHE.groesser);
+  const nahCache = new Map();
+  const nah = w => {
+    const key = Math.round(w * 10);
+    if (!nahCache.has(key)) {
+      const u = [Math.cos(rad(w)), Math.sin(rad(w))], m = aussen - radius - SUCHE.nachInnen / 2;
+      const h = radius + SUCHE.nachInnen / 2 + 2;
+      const box = { x0: u[0] * m - h, x1: u[0] * m + h, y0: u[1] * m - h, y1: u[1] * m + h };
+      nahCache.set(key, { ring: ausschnitt(ring, box), name: ausschnitt(name, box), ziel: zielTeil === name ? null : ausschnitt(zielTeil, box) });
+    }
+    return nahCache.get(key);
+  };
 
-  const pruefe = (w, dreh, k, d) => {
+  // Schritt 1 (schnell): Lage berechnen, grobe Ausschlüsse, Untergrenze der Bewertung
+  const vorpruefen = (w, dreh, k, d) => {
     let form = G.skaliere(G.drehe(roh, dreh), k);
     const u = [Math.cos(rad(w)), Math.sin(rad(w))];
     const r = maxRadius(form, u, aussen - cfg.randAussen) - d;
@@ -234,19 +250,23 @@ function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = na
     form = G.verschiebe(form, u[0] * r, u[1] * r);
     const b = G.grenzen(form);
     for (const x of belegtB) if (ueberlappt(b, x.b) && G.flaeche(G.schneide(form, x.f)) > 0.05) return null;
-    const ringNah = ausschnitt(ring, b);
-    // Ring darf nicht durch Herz/Pfote/Stern-Umriss schneiden
+    const nc = nah(w);
+    const ueber = nc.name.length ? G.flaeche(G.schneide(form, nc.name)) : 0;
+    if (haupt ? ueber <= 0 : ueber > 0.3) return null;
+    // Motiv soll sich an den Ring schmiegen und den Namen nur wenig verdecken
+    const unten = Math.abs(w - w0) * 0.25 + Math.abs(dreh - drehZiel) * 0.12 + d * 2 + (k - 1) * 120 + ueber * 0.2;
+    return { form, u, r, b, nc, ueber, unten, w, dreh, k, d };
+  };
+  // Schritt 2 (genau): Ring nicht durchs Motiv-Innere, Verbindungen messen
+  const pruefen = c => {
+    const { form, u, r, nc, ueber, w, dreh, k, d } = c;
+    const ringNah = nc.ring, nameNah = nc.name;
     if (luecken && luecken.length && G.flaeche(G.schneide(lage(luecken, dreh, k, u, r), ringNah)) > 0.3) return null;
-    const nameNah = ausschnitt(name, b);
-    const ueber = nameNah.length ? G.flaeche(G.schneide(form, nameNah)) : 0;
     let vName = 0;
     if (haupt) {
-      if (ueber <= 0) return null;
-      const zielNah = zielTeil === name ? nameNah : ausschnitt(zielTeil, b);
-      if (!zielNah.length) return null;
-      vName = G.verbindung(form, zielNah);
+      vName = G.verbindung(form, nc.ziel || nameNah);
       if (vName < cfg.minVerbindung) return null;
-    } else if (ueber > 0.3) return null;
+    }
     const vRing = G.verbindung(form, ringNah);
     if (vRing < cfg.minVerbindung) return null;
     // Einzelflächen (z. B. beide Herzen) müssen jeweils sicher hängen
@@ -260,8 +280,16 @@ function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = na
       }
     }
     const schwach = Math.min(vRing, haupt ? vName : 99) < cfg.zielVerbindung ? 15 : 0;
-    const wert = Math.abs(w - w0) * 0.25 + Math.abs(dreh - drehZiel) * 0.12 + d * 1.2 + (k - 1) * 120 + ueber * 0.06 + schwach;
-    return { form, wert, winkel: w, drehung: dreh, groesse: k, nachInnen: d, vRing, vName, ueber };
+    return { form, wert: c.unten + schwach, winkel: w, drehung: dreh, groesse: k, nachInnen: d, vRing, vName, ueber };
+  };
+  // Kandidaten nach Untergrenze sortieren und nur so lange genau prüfen, wie noch Besseres möglich ist
+  const bewerte = kandidaten => {
+    const vor = kandidaten.map(([w, dr, k, d]) => vorpruefen(w, dr, k, d)).filter(Boolean).sort((a, b) => a.unten - b.unten);
+    for (const c of vor) {
+      if (best && c.unten >= best.wert) break;
+      const e = pruefen(c);
+      if (e && (!best || e.wert < best.wert)) best = e;
+    }
   };
 
   const bereich = (mitte, weite, schritt) => {
@@ -270,22 +298,23 @@ function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = na
     return l;
   };
   const drehungen = drehMax ? bereich(0, drehMax, SUCHE.drehSchritt * 2) : [0];
-  const besser = e => { if (e && (!best || e.wert < best.wert)) best = e; };
   for (const k of SUCHE.groesser) {
-    // grob suchen …
-    for (let d = 0; d <= SUCHE.nachInnen + 1e-9 && !best; d += SUCHE.innenSchritt) {
-      for (const w of bereich(w0, SUCHE.winkel, SUCHE.winkelSchritt * 2))
-        for (const dr of drehungen) besser(pruefe(w, dr, k, d));
+    // grob suchen (Ebene für Ebene nach innen, solange das noch besser werden kann) …
+    for (let d = 0; d <= SUCHE.nachInnen + 1e-9; d += SUCHE.innenSchritt) {
+      if (best && d * 2 >= best.wert) break;
+      const kand = [];
+      for (const w of bereich(w0, SUCHE.winkel, SUCHE.winkelSchritt * 2)) for (const dr of drehungen) kand.push([w, dr, k, d]);
+      bewerte(kand);
     }
     // … dann um den besten Treffer fein nachsuchen
     if (best) {
-      const g = best;
-      const feinD = drehMax ? bereich(g.drehung, SUCHE.drehSchritt * 2, SUCHE.drehSchritt) : [0];
-      for (const w of bereich(g.winkel, SUCHE.winkelSchritt * 2, SUCHE.winkelSchritt))
+      const g = best, kand = [];
+      const feinD = drehMax ? bereich(g.drehung, SUCHE.drehSchritt * 2, SUCHE.drehSchritt).filter(x => Math.abs(x) <= drehMax) : [0];
+      for (const w of bereich(g.winkel, SUCHE.winkelSchritt * 2, SUCHE.winkelSchritt).filter(x => Math.abs(x - w0) <= SUCHE.winkel))
         for (const dr of feinD)
-          for (const d of [g.nachInnen, Math.max(0, g.nachInnen - SUCHE.innenSchritt / 2), g.nachInnen + SUCHE.innenSchritt / 2]) {
-            if (Math.abs(w - w0) <= SUCHE.winkel && Math.abs(dr) <= drehMax) besser(pruefe(w, dr, k, d));
-          }
+          for (const d of [g.nachInnen, g.nachInnen - SUCHE.innenSchritt / 2, g.nachInnen - SUCHE.innenSchritt / 4, g.nachInnen + SUCHE.innenSchritt / 4])
+            if (d >= 0) kand.push([w, dr, k, d]);
+      bewerte(kand);
       break;
     }
   }
@@ -349,13 +378,14 @@ export function baueKugel({ font, teileDaten, name, motiv, einstellungen = {} })
   })());
   const varianten = [def.teile, def.teile.map(t => ({ ...t, winkel: 180 - t.winkel, drehZiel: -(t.drehZiel || 0) }))];
   let motive = null, wahl = null;
+  const varSummen = [];
   for (const [vi, teile] of varianten.entries()) {
     const m = [], belegt = [], p = [];
     const reihenfolge = teile.map((t, i) => ({ ...t, i })).sort((a, b) => b.haupt - a.haupt);
     // Besteht der Name aus mehreren Teilen (z. B. "T" + "ina"), braucht jedes Teil ein eigenes Motiv als Halt
     const ziele = zieleVerteilen(G.teile(nameForm), reihenfolge.filter(t => t.haupt), innen);
     if (ziele.fehlt) p.push('Name hat mehr Teile als Motive – bitte prüfen');
-    let summe = 0;
+    let summe = vi ? (def.spiegeln ?? 0) : 0; // manche Motive lieber in Joels Standard-Diagonale
     for (const t of reihenfolge) {
       const ziel = t.haupt && ziele.zu ? ziele.zu.get(t) : nameForm;
       const erg = platziere({ ...teilDaten(t.teil), winkel: t.winkel, haupt: t.haupt, drehMax: def.drehen || 0, drehZiel: t.drehZiel || 0 },
@@ -371,16 +401,19 @@ export function baueKugel({ font, teileDaten, name, motiv, einstellungen = {} })
         p.push(`Kein guter Platz für ${t.teil} gefunden`);
       }
     }
+    varSummen.push(Math.round(summe));
     if (!wahl || summe < wahl.summe) { wahl = { summe, p, vi }; motive = m; }
   }
-  protokoll.push(...wahl.p, wahl.vi ? 'Motive: oben links / unten rechts' : 'Motive: unten links / oben rechts');
+  const h = motive.find(m => m.haupt && m.form);
+  const obenRechts = h && Math.sin(rad(h.winkel)) * Math.cos(rad(h.winkel)) > 0;
+  protokoll.push(...wahl.p, obenRechts ? 'Motive: oben rechts / unten links' : 'Motive: oben links / unten rechts');
 
   // Alles vereinigen, kleine Ritzen schließen
   let gesamt = G.vereinige(ring.concat(nameForm, ...motive.filter(m => m.form).map(m => m.form)));
   if (cfg.glaetten > 0) gesamt = G.versatz(G.versatz(gesamt, cfg.glaetten), -cfg.glaetten);
 
   const pruefung = pruefe({ gesamt, ring, nameForm, motive, cfg });
-  return { name, motiv, cfg, ring, nameForm, bruecken: n.bruecken, motive, gesamt, pruefung, protokoll };
+  return { name, motiv, cfg, ring, nameForm, bruecken: n.bruecken, motive, gesamt, pruefung, protokoll, varSummen };
 }
 
 // ---------- Prüfung ----------
