@@ -182,3 +182,13 @@ export function linieInForm(linie, form) {
   c.Execute(L.ClipType.ctIntersection, tree, L.PolyFillType.pftNonZero, L.PolyFillType.pftNonZero);
   return L.Clipper.OpenPathsFromPolyTree(tree).map(p => [[p[0].X / SK, p[0].Y / SK], [p[p.length - 1].X / SK, p[p.length - 1].Y / SK]]);
 }
+
+// Linie (offener Pfad) mit runden Enden als Fläche
+export function strich(punkte, breite) {
+  const L = C();
+  const co = new L.ClipperOffset(2, 0.02 * SK);
+  co.AddPath(zuClipper([punkte])[0], L.JoinType.jtRound, L.EndType.etOpenRound);
+  const out = new L.Paths();
+  co.Execute(out, (breite / 2) * SK);
+  return vonClipper(out);
+}

@@ -31,7 +31,7 @@ export async function schriftLaden() {
     r.onsuccess = () => ok(r.result); r.onerror = () => f(r.error);
   });
   if (!e) return null;
-  return { name: e.name, font: schriftAusPuffer(e.buf) };
+  return { name: e.name, font: schriftAusPuffer(e.buf), puffer: e.buf };
 }
 
 export function schriftAusPuffer(buf) {
@@ -39,9 +39,22 @@ export function schriftAusPuffer(buf) {
 }
 
 // Name -> Form in Schrift-Einheiten (1 Einheit = 1/1000 Geviert), y nach oben.
-// Jede Glyphe wird einzeln geliefert (für Prüfungen); dazu die Gesamtform.
+const OPT = { kerning: true, features: { liga: true, rlig: true } };
 export function nameZuForm(font, text) {
-  const pfad = font.getPath(text, 0, 0, 1000, { kerning: true, features: { liga: true, rlig: true } });
+  return pfadZuForm(font.getPath(text, 0, 0, 1000, OPT));
+}
+
+// Einzelne Buchstaben mit Zeichen (für Regeln wie „nach einem T keine Brücke“)
+export function nameGlyphen(font, text) {
+  const glyphen = font.stringToGlyphs(text, OPT);
+  const pfade = font.getPaths(text, 0, 0, 1000, OPT);
+  return pfade.map((p, i) => ({
+    zeichen: glyphen[i] && glyphen[i].unicode ? String.fromCodePoint(glyphen[i].unicode) : '',
+    form: pfadZuForm(p),
+  })).filter(g => g.form.length);
+}
+
+function pfadZuForm(pfad) {
   const form = [];
   let akt = null, x = 0, y = 0;
   const N = 14; // Unterteilung je Kurve

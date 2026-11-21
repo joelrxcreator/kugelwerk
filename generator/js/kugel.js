@@ -4,9 +4,9 @@
 // 3. Motive diagonal an den Ring setzen, leicht verschieben/drehen, bis sie Ring UND Namen sicher berühren.
 // 4. Alles vereinigen und prüfen (ein Teil, Verbindungen >= 0,8 mm).
 
-import * as G from './geo.js?v=2';
-import { STANDARD, MOTIVE, SUCHE } from './einstellungen.js?v=2';
-import { nameZuForm } from './schrift.js?v=2';
+import * as G from './geo.js?v=3';
+import { STANDARD, MOTIVE, SUCHE } from './einstellungen.js?v=3';
+import { nameZuForm, nameGlyphen } from './schrift.js?v=3';
 
 const rad = g => g * Math.PI / 180;
 
@@ -28,12 +28,14 @@ function optischeMitte(form) {
   return [0.5 * b.cx + 0.5 * s[0], 0.5 * b.cy + 0.5 * s[1]];
 }
 
-function groesseFuer(form, cfg, innen) {
+function groesseFuer(form, cfg, innen, kern = 0) {
   const b = G.grenzen(form);
   const [mx, my] = optischeMitte(form);
   let maxD = 0;
   for (const p of form) for (const [x, y] of p) maxD = Math.max(maxD, Math.hypot(x - mx, y - my));
-  return Math.min(cfg.nameMaxBreite / b.b, cfg.nameMaxHoehe / b.h, (innen - cfg.abstandRing) / maxD);
+  // Höhe: gesamt höchstens nameMaxHoehe – außer die Großbuchstaben-Höhe (kern) bleibt dann unnötig klein
+  const hoehe = Math.max(cfg.nameMaxHoehe / b.h, kern ? cfg.nameMaxKern / kern : 0);
+  return Math.min(cfg.nameMaxBreite / b.b, hoehe, (innen - cfg.abstandRing) / maxD);
 }
 
 function zentriere(form) {
@@ -42,8 +44,21 @@ function zentriere(form) {
 }
 
 // ---------- Name: lose Teile verbinden ----------
-function verbindeName(form, cfg, protokoll) {
-  let stuecke = G.teile(form).map(f => ({ form: f, flaeche: G.flaeche(f) }));
+function verbindeName(form, cfg, protokoll, glyphen = []) {
+  let stuecke = G.teile(form).map(f => ({ form: f, flaeche: G.flaeche(f), glyphen: new Set() }));
+  // jedem Stück seine Buchstaben zuordnen (z. B. „gehört zum T“)
+  glyphen.forEach((g, gi) => {
+    const bg = G.grenzen(g.form);
+    let bestS = null, bestA = 0;
+    for (const st of stuecke) {
+      const bs = G.grenzen(st.form);
+      if (bs.x1 < bg.x0 || bs.x0 > bg.x1 || bs.y1 < bg.y0 || bs.y0 > bg.y1) continue;
+      const a = G.flaeche(G.schneide(st.form, g.form));
+      if (a > bestA) { bestA = a; bestS = st; }
+      if (a > 0.5 * G.flaeche(st.form)) st.glyphen.add(gi);
+    }
+    if (bestS) bestS.glyphen.add(gi);
+  });
   const groesste = Math.max(...stuecke.map(s => s.flaeche));
   const bruecken = [];
   const verbindungen = [];
@@ -75,6 +90,12 @@ function verbindeName(form, cfg, protokoll) {
     const { a, b, fa, fb, np } = best;
     // kleinere Gruppe ist die, die bewegt/angebunden wird
     const [klein, gross, fk, fg] = G.flaeche(fa) < G.flaeche(fb) ? [a, b, fa, fb] : [b, a, fb, fa];
+    // Nach einem T (oder F) keine Verbindung zum nächsten Buchstaben – sieht nie schön aus (Joel: „bei T ist das so eine Sache“)
+    const gGlyphen = w => new Set(stuecke.flatMap((st, i) => (wurzel(i) === w ? [...st.glyphen] : [])));
+    const [links, rechts] = G.grenzen(fa).cx < G.grenzen(fb).cx ? [a, b] : [b, a];
+    const gl = [...gGlyphen(links)], gr = gGlyphen(rechts);
+    const letzter = gl.length ? Math.max(...gl) : -1;
+    const ohneBruecke = letzter >= 0 && !gr.has(letzter) && cfg.ohneVerbindungNach.includes(glyphen[letzter].zeichen);
 
     {
       // Abgesetzter Anfangs- oder Endbuchstabe: ranschieben (wie bei "Paul")
@@ -86,7 +107,7 @@ function verbindeName(form, cfg, protokoll) {
       let geschoben = false;
       // nur Buchstaben nebeneinander schieben (nicht z. B. einen T-Balken über dem Stamm)
       const nebeneinander = Math.min(bk.y1, bg.y1) - Math.max(bk.y0, bg.y0) > 0.5 * Math.min(bk.h, bg.h);
-      if (richtung && !klein_ && nebeneinander && np.d > 0.05) {
+      if (richtung && !klein_ && nebeneinander && !ohneBruecke && np.d > 0.05) {
         for (let s = 0.1; s <= cfg.maxSchieben + 1e-9; s += 0.1) {
           const neu = G.verschiebe(fk, richtung * s, 0);
           const v = G.verbindung(neu, fg);
@@ -112,6 +133,8 @@ function verbindeName(form, cfg, protokoll) {
         const vorher = G.verbindung(fk, fg);
         if (vorher >= cfg.zielVerbindung) {
           protokoll.push('Buchstaben berühren sich schon');
+        } else if (ohneBruecke) {
+          protokoll.push(`Nach „${glyphen[letzter].zeichen}“ keine Brücke – Teil hängt an einem Motiv`);
         } else if (np.d <= cfg.kleineLuecke || (klein_ && np.d <= cfg.maxBruecke)) {
           // winzige Lücke (T-Balken) oder kleines Zeichen (Bindestrich): an der engsten Stelle
           const br = brueckeZwischen(fk, fg, cfg.brueckeBuchstabe);
@@ -121,10 +144,15 @@ function verbindeName(form, cfg, protokoll) {
           // größere Lücke: Brücke unten an der Grundlinie (wie Joel bei "Wilma": W unten -> i)
           const nb = G.grenzen(stuecke.flatMap(x => x.form));
           const unten = [[[nb.x0 - 5, nb.y0 - 5], [nb.x1 + 5, nb.y0 - 5], [nb.x1 + 5, nb.y0 + cfg.grundlinie * nb.h], [nb.x0 - 5, nb.y0 + cfg.grundlinie * nb.h]]];
-          const uk = G.schneide(fk, unten), ug = G.schneide(fg, unten);
-          const npu = uk.length && ug.length ? G.naechstePunkte(uk, ug) : { d: Infinity };
+          const [fl, fr] = G.grenzen(fk).cx < G.grenzen(fg).cx ? [fk, fg] : [fg, fk];
+          const ul = G.schneide(fl, unten), ur = G.schneide(fr, unten);
+          const npu = ul.length && ur.length ? G.naechstePunkte(ul, ur) : { d: Infinity };
           if (npu.d <= cfg.maxBruecke) {
-            const br = brueckeVon(npu, cfg.brueckeBuchstabe);
+            // Start am tiefsten Punkt in der rechten Hälfte des linken Buchstabens (V-Spitze, W-Tal)
+            const bl = G.grenzen(fl);
+            let start = null;
+            for (const pf of fl) for (const pt of pf) if (pt[0] >= bl.cx && (!start || pt[1] < start[1] - 1e-6 || (Math.abs(pt[1] - start[1]) < 0.2 && pt[0] > start[0]))) start = pt;
+            const br = schwungBruecke(start || npu.a, fr, nb.h, cfg.brueckeBuchstabe);
             br.gruppe = klein; bruecken.push(br);
             protokoll.push(`Brücke unten zwischen Buchstaben (${npu.d.toFixed(1)} mm Lücke)`);
           } else {
@@ -181,6 +209,32 @@ function punktBruecke(punkt, buchstaben, breite) {
   return { form: G.kapsel([cx, cy], mitte, breite), von: [cx, cy], bis: mitte, breite };
 }
 
+// Geschwungene Brücke wie in Schreibschrift: von unten aus dem linken Buchstaben weich
+// nach rechts oben in den nächsten Buchstaben (z. B. V -> i bei „Viola“, W -> i bei „Wilma“)
+function schwungBruecke(p, rechts, nameHoehe, breite) {
+  // Einstiegspunkt am rechten Buchstaben: linke Kante, etwas höher als der Startpunkt
+  const y0 = p[1] + 0.12 * nameHoehe, y1 = p[1] + 0.3 * nameHoehe;
+  let q = null;
+  for (const pf of rechts) for (const pt of pf) {
+    if (pt[1] < y0 || pt[1] > y1 || pt[0] < p[0]) continue;
+    if (!q || pt[0] < q[0]) q = pt;
+  }
+  if (!q) return brueckeVon(G.naechstePunkte([[p, [p[0] + 0.01, p[1]], [p[0], p[1] + 0.01]]], rechts), breite);
+  // Ende mittig im Strich des rechten Buchstabens (Querschnitt auf Höhe q)
+  const quer = G.linieInForm([[q[0] - 0.5, q[1]], [q[0] + 10, q[1]]], rechts).sort((m, n) => m[0][0] - n[0][0]);
+  const e = quer.length ? [(quer[0][0][0] + quer[0][1][0]) / 2, q[1]] : q;
+  // Kurve: unten waagerecht los, dann weich nach rechts oben in den Buchstaben
+  const dx = e[0] - p[0];
+  const a = [p[0] + 0.2, p[1] + 0.7];                // etwas im linken Buchstaben starten
+  const c = [e[0] - 0.3 * dx, p[1] + 0.5];           // Kontrollpunkt unten -> weicher Bogen
+  const punkte = [];
+  for (let i = 0; i <= 24; i++) {
+    const t = i / 24, u = 1 - t;
+    punkte.push([u * u * a[0] + 2 * u * t * c[0] + t * t * e[0], u * u * a[1] + 2 * u * t * c[1] + t * t * e[1]]);
+  }
+  return { form: G.strich(punkte, breite), von: p, bis: q, breite };
+}
+
 function brueckeZwischen(a, b, breite) {
   return brueckeVon(G.naechstePunkte(a, b), breite);
 }
@@ -215,7 +269,7 @@ function innenraeume(flaechen) {
   return G.ohne(G.vereinige(aussen.concat(zu)), roh);
 }
 
-function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = name) {
+function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = name, nameZone = name) {
   const { flaechen, luecken, winkel: w0, haupt, drehMax = 0, drehZiel = 0 } = stueck;
   const roh = flaechen.flat();
   let best = null;
@@ -236,7 +290,7 @@ function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = na
       const u = [Math.cos(rad(w)), Math.sin(rad(w))], m = aussen - radius - SUCHE.nachInnen / 2;
       const h = radius + SUCHE.nachInnen / 2 + 2;
       const box = { x0: u[0] * m - h, x1: u[0] * m + h, y0: u[1] * m - h, y1: u[1] * m + h };
-      nahCache.set(key, { ring: ausschnitt(ring, box), name: ausschnitt(name, box), ziel: zielTeil === name ? null : ausschnitt(zielTeil, box) });
+      nahCache.set(key, { ring: ausschnitt(ring, box), name: ausschnitt(name, box), zone: ausschnitt(nameZone, box), ziel: zielTeil === name ? null : ausschnitt(zielTeil, box) });
     }
     return nahCache.get(key);
   };
@@ -254,7 +308,9 @@ function platziere(stueck, ring, name, belegt, innen, aussen, cfg, zielTeil = na
     const ueber = nc.name.length ? G.flaeche(G.schneide(form, nc.name)) : 0;
     if (haupt ? ueber <= 0 : ueber > 0.3) return null;
     // Motiv soll sich an den Ring schmiegen und den Namen nur wenig verdecken
-    const unten = Math.abs(w - w0) * 0.25 + Math.abs(dreh - drehZiel) * 0.12 + d * 2 + (k - 1) * 120 + ueber * 0.2;
+    // „Nähe“ zu den Buchstaben: Fläche im Umkreis von 2 mm um den Namen (Motiv soll nicht in Buchstaben hineinragen, z. B. ins E)
+    const naehe = nc.zone.length ? G.flaeche(G.schneide(form, nc.zone)) - ueber : 0;
+    const unten = Math.abs(w - w0) * 0.25 + Math.abs(dreh - drehZiel) * 0.12 + d * 2 + (k - 1) * 120 + ueber * 0.4 + naehe * 0.15;
     return { form, u, r, b, nc, ueber, unten, w, dreh, k, d };
   };
   // Schritt 2 (genau): Ring nicht durchs Motiv-Innere, Verbindungen messen
@@ -348,18 +404,20 @@ export function baueKugel({ font, teileDaten, name, motiv, einstellungen = {} })
   const ring = ringForm(teileDaten);
   const innen = teileDaten.ring.innenRadius, aussen = teileDaten.ring.aussenRadius;
   const roh = G.vereinige(nameZuForm(font, name.trim()));
+  const glyphenRoh = nameGlyphen(font, name.trim());
   if (!roh.length) throw new Error('Name ist leer');
 
   // Größe bestimmen und Teile verbinden; falls der Name dadurch zu breit wird, etwas kleiner
-  let s = groesseFuer(roh, cfg, innen);
+  const kern = (font.tables && font.tables.os2 && font.tables.os2.sCapHeight) || 700; // Großbuchstaben-Höhe in Schrift-Einheiten
+  let s = groesseFuer(roh, cfg, innen, kern);
   let n;
   for (let versuch = 0; versuch < 10; versuch++) {
     const p = [];
-    n = verbindeName(G.skaliere(roh, s), cfg, p);
+    n = verbindeName(G.skaliere(roh, s), cfg, p, glyphenRoh.map(g => ({ ...g, form: G.skaliere(g.form, s) })));
     const [z, dx, dy] = zentriere(n.form);
     n.form = z;
     n.bruecken = n.bruecken.map(b => ({ ...b, form: G.verschiebe(b.form, dx, dy) }));
-    const neu = groesseFuer(n.form, cfg, innen);
+    const neu = groesseFuer(n.form, cfg, innen, kern * s);
     if (neu >= 0.999) { protokoll.push(...p); break; }
     s *= Math.max(0.9, neu * 0.995);
     if (versuch === 9) protokoll.push(...p);
@@ -367,6 +425,7 @@ export function baueKugel({ font, teileDaten, name, motiv, einstellungen = {} })
   const nameForm = n.form;
   const nb = G.grenzen(nameForm);
   protokoll.unshift(`Name ${nb.b.toFixed(1)} × ${nb.h.toFixed(1)} mm`);
+  const klein = kern * s < cfg.nameMinHoehe;
 
   // Motive: beide Diagonalen probieren und die schönere nehmen
   const def = MOTIVE[motiv];
@@ -376,6 +435,7 @@ export function baueKugel({ font, teileDaten, name, motiv, einstellungen = {} })
     const flaechen = teilForm(teileDaten, name);
     return { flaechen, luecken: def.innenFrei ? innenraeume(flaechen) : null };
   })());
+  const nameZone = G.versatz(nameForm, 2);
   const varianten = [def.teile, def.teile.map(t => ({ ...t, winkel: 180 - t.winkel, drehZiel: -(t.drehZiel || 0) }))];
   let motive = null, wahl = null;
   const varSummen = [];
@@ -389,7 +449,7 @@ export function baueKugel({ font, teileDaten, name, motiv, einstellungen = {} })
     for (const t of reihenfolge) {
       const ziel = t.haupt && ziele.zu ? ziele.zu.get(t) : nameForm;
       const erg = platziere({ ...teilDaten(t.teil), winkel: t.winkel, haupt: t.haupt, drehMax: def.drehen || 0, drehZiel: t.drehZiel || 0 },
-        ring, nameForm, belegt, innen, aussen, cfg, ziel);
+        ring, nameForm, belegt, innen, aussen, cfg, ziel, nameZone);
       if (erg) {
         belegt.push(erg.form);
         m.push({ ...t, ...erg });
@@ -413,6 +473,7 @@ export function baueKugel({ font, teileDaten, name, motiv, einstellungen = {} })
   if (cfg.glaetten > 0) gesamt = G.versatz(G.versatz(gesamt, cfg.glaetten), -cfg.glaetten);
 
   const pruefung = pruefe({ gesamt, ring, nameForm, motive, cfg });
+  if (klein) pruefung.hinweise.push('Langer Name – Schrift wird recht klein');
   return { name, motiv, cfg, ring, nameForm, bruecken: n.bruecken, motive, gesamt, pruefung, protokoll, varSummen };
 }
 

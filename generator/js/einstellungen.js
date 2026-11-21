@@ -8,13 +8,16 @@ export const STANDARD = {
   brueckePunkt: 1.0,     // Breite der Brücke zu i-Punkten / Umlaut-Punkten
   brueckeBuchstabe: 1.6, // Breite der Brücke zwischen Buchstaben (z. B. W -> i)
   kleineLuecke: 1.5,     // so kleine Lücken (T-/F-Balken, J -> ü) werden direkt an der engsten Stelle überbrückt
-  maxBruecke: 3.5,       // größere Lücken nur unten an der Grundlinie überbrücken (wie W -> i bei „Wilma“)
+  maxBruecke: 4.5,       // größere Lücken nur unten an der Grundlinie mit weichem Bogen überbrücken (W -> i, V -> i)
   grundlinie: 0.4,       // „unten“ = unteres 40 % des Namens
+  ohneVerbindungNach: ['T', 'F'], // nach diesen Buchstaben nie Brücke/Schieben (Teil hängt am Motiv)
   maxSchieben: 3,        // so weit darf ein abgesetzter Anfangs-/Endbuchstabe rangeschoben werden
   maxBeruehrung: 3.5,    // berühren sich zwei Buchstaben breiter, kleben sie aneinander -> nicht schieben
   abstandRing: 2.0,      // Name hält mindestens so viel Abstand zum Ring
   nameMaxBreite: 80,     // größte Namensbreite
-  nameMaxHoehe: 36,      // größte Namenshöhe
+  nameMaxHoehe: 36,      // größte Namenshöhe (gesamt)
+  nameMaxKern: 30,       // Großbuchstaben-Höhe darf bis hierhin gehen, auch wenn f/J/y weit hinausragen (z. B. „Elif“)
+  nameMinHoehe: 12,      // Großbuchstaben kleiner als das -> Hinweis „langer Name“
   randAussen: 0.4,       // Motive bleiben so weit innerhalb der Außenkante
   glaetten: 0,           // Ritzen schließen: aus (Joel will keine Extra-Striche, z. B. im „a“)
   plattenGroesse: 256,   // Bambu Lab P1S

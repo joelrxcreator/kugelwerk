@@ -1,11 +1,11 @@
 // Bedienoberfläche des 3D-Generators.
 // Aufruf aus dem Backoffice: generator/?titel=Drucker%201&kugeln=[{"nr":"#07","name":"Emma","motiv":"herzen"}]
 
-import { schriftLaden, schriftSpeichern } from './js/schrift.js?v=2';
-import { baueKugel } from './js/kugel.js?v=2';
-import { vorschauSvg } from './js/vorschau.js?v=2';
-import { platte3mf, stl } from './js/export.js?v=2';
-import { MOTIVE, STANDARD } from './js/einstellungen.js?v=2';
+import { schriftLaden, schriftSpeichern } from './js/schrift.js?v=3';
+import { baueKugel } from './js/kugel.js?v=3';
+import { vorschauSvg } from './js/vorschau.js?v=3';
+import { platte3mf, stl } from './js/export.js?v=3';
+import { MOTIVE, STANDARD } from './js/einstellungen.js?v=3';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -32,7 +32,7 @@ async function start() {
   zustand.teileDaten = await (await fetch('vorlagen/teile.json?v=1')).json();
   try {
     const s = await schriftLaden();
-    if (s) { zustand.font = s.font; zustand.schriftName = s.name; }
+    if (s) { zustand.font = s.font; zustand.schriftName = s.name; zustand.puffer = s.puffer; }
   } catch (e) { console.warn(e); }
   zeigeSchrift();
   zeileListe();
@@ -52,7 +52,9 @@ async function schriftGewaehlt(e) {
   if (!f) return;
   try {
     zustand.schriftName = await schriftSpeichern(f);
-    zustand.font = (await schriftLaden()).font;
+    const neu = await schriftLaden();
+    zustand.font = neu.font; zustand.puffer = neu.puffer;
+    rechnerBeenden();
     zustand.ergebnisse.clear();
     zeigeSchrift();
     rechne();
@@ -86,27 +88,67 @@ function eingabe(e) {
   timer = setTimeout(rechne, 450);
 }
 
-// ---------- Berechnen ----------
+// ---------- Berechnen (parallel im Hintergrund, eine Kugel pro Rechner) ----------
+const VERSION = 3;
 const schluessel = k => `${k.name.trim()}|${k.motiv}`;
-let lauf = 0;
+let rechner = [];           // { w, frei }
+const unterwegs = new Map(); // schluessel -> true
+const warteschlange = [];
 
-async function rechne() {
-  const meinLauf = ++lauf;
+function rechnerBeenden() { rechner.forEach(r => r.w.terminate()); rechner = []; unterwegs.clear(); warteschlange.length = 0; }
+
+function rechnerHolen() {
+  let r = rechner.find(x => x.frei);
+  const max = Math.min(4, Math.max(1, (navigator.hardwareConcurrency || 2) - 1));
+  if (!r && rechner.length < max) {
+    try {
+      const w = new Worker(`js/rechner.js?v=${VERSION}`, { type: 'module' });
+      w.postMessage({ typ: 'init', schrift: zustand.puffer.slice(0), teile: zustand.teileDaten, version: VERSION });
+      r = { w, frei: true };
+      w.onmessage = e => fertig(r, e.data);
+      w.onerror = e => { console.error(e); };
+      rechner.push(r);
+    } catch (e) { return null; }
+  }
+  return r;
+}
+
+function fertig(r, d) {
+  r.frei = true;
+  zustand.ergebnisse.set(r.key, d.fehler ? { fehler: d.fehler } : d.ergebnis);
+  unterwegs.delete(r.key);
+  zeigeKarten();
+  verteile();
+}
+
+function verteile() {
+  while (warteschlange.length) {
+    const r = rechnerHolen();
+    if (!r || !r.frei) return;
+    const k = warteschlange.shift();
+    const key = schluessel(k);
+    if (zustand.ergebnisse.has(key)) { unterwegs.delete(key); continue; }
+    r.frei = false; r.key = key;
+    r.w.postMessage({ typ: 'kugel', id: key, name: k.name.trim(), motiv: k.motiv, einstellungen: { hoehe: zustand.hoehe } });
+  }
+}
+
+function rechne() {
   zeigeKarten();
   if (!zustand.font) return;
   for (const k of zustand.kugeln) {
-    if (!k.name.trim() || zustand.ergebnisse.has(schluessel(k))) continue;
-    await new Promise(r => setTimeout(r, 30)); // Anzeige kurz aktualisieren lassen
-    if (meinLauf !== lauf) return;
-    try {
-      const erg = baueKugel({ font: zustand.font, teileDaten: zustand.teileDaten, name: k.name, motiv: k.motiv, einstellungen: { hoehe: zustand.hoehe } });
-      zustand.ergebnisse.set(schluessel(k), erg);
-    } catch (err) {
-      console.error(err);
-      zustand.ergebnisse.set(schluessel(k), { fehler: err.message || String(err) });
+    const key = schluessel(k);
+    if (!k.name.trim() || zustand.ergebnisse.has(key) || unterwegs.has(key)) continue;
+    if (!zustand.puffer || typeof Worker === 'undefined') { // Notlösung ohne Hintergrund-Rechner
+      try { zustand.ergebnisse.set(key, baueKugel({ font: zustand.font, teileDaten: zustand.teileDaten, name: k.name, motiv: k.motiv, einstellungen: { hoehe: zustand.hoehe } })); }
+      catch (err) { zustand.ergebnisse.set(key, { fehler: err.message || String(err) }); }
+      continue;
     }
-    zeigeKarten();
+    unterwegs.set(key, true);
+    warteschlange.push({ ...k });
   }
+  verteile();
+  zeigeKarten();
 }
 
 function zeigeKarten() {
@@ -182,5 +224,12 @@ $('#hoehe').addEventListener('change', e => {
 $('#schriftKnopf').addEventListener('click', () => $('#schriftDatei').click());
 $('#schriftWaehlen').addEventListener('click', () => $('#schriftDatei').click());
 $('#schriftDatei').addEventListener('change', schriftGewaehlt);
+
+// Zurück: Backoffice-Tab wieder nach vorne holen und diesen Tab schließen (statt ein zweites Backoffice zu öffnen)
+$('#zurueck').addEventListener('click', e => {
+  try {
+    if (window.opener && !window.opener.closed) { e.preventDefault(); window.opener.focus(); window.close(); }
+  } catch (err) { /* normaler Link */ }
+});
 
 start();

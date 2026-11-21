@@ -317,7 +317,7 @@
       <div class="pbar"><i style="width:${pct.toFixed(1)}%"></i></div>
       <div class="plist">${items.map(i => `<div><span class="no">${nr(i.order.number)}</span><span class="nm">${esc(i.name)}</span><span class="vchip">${esc(label2(i.variant))}</span><button class="mini-btn" data-copy="${esc(i.name)}" title="Name kopieren">${I('copy')}</button></div>`).join('')}</div>
       <div class="pactions">
-        <a class="btn secondary" href="${genLink(label, items)}" target="_blank" rel="noopener" title="Fertige 3MF-Datei für Bambu Studio erzeugen">${I('download')} 3D-Datei</a>
+        <a class="btn secondary" href="${genLink(label, items)}" target="kugelwerk-generator" title="Fertige 3MF-Datei für Bambu Studio erzeugen">${I('download')} 3D-Datei</a>
         <button class="btn pine" data-finish="${pl.id}">${I('check')} Druck fertig</button>
         <button class="btn secondary" data-time="${pl.id}" title="Druckzeit anpassen">${I('clock')} ${pl.minutes} Min.</button>
         <button class="btn secondary" data-abort="${pl.id}" title="Abbrechen – Kugeln zurück in die Warteschlange">${I('undo')}</button>
