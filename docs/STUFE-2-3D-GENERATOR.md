@@ -8,6 +8,24 @@
 - **Vorlagen:** pro Motiv eine Datei **ohne Namen** (Ring + Öse + Motiv), von Joel geliefert (STL oder sein Bambu-Projekt „Vorlage.3mf“ mit 5 Platten: Schneeflocken, Pfoten, Glanzsterne, Sterne (5-zackig), Herzen – siehe `docs/referenz/vorlagen-bambu.webp`). Ablage: `generator/vorlagen/<variant>.stl` (Schlüssel wie in der App: `herzen`, `sterne`, `glanzsterne`, `schneeflocken`, `pfoten`).
 - **Direkt an den Drucker senden** (P1S, LAN-/Entwicklermodus) ist **später** ein Bonus – erst wenn alles andere sicher läuft.
 
+## Regeln von Joel (aus seiner Handarbeit, 21.11.)
+Drucker: P1S, Düse 0,4 mm, Schichthöhe 0,2 mm. **Alles vollautomatisch** – Joel will direkt die fertige Datei; Verbesserungen laufen über Feedback → besserer Code.
+1. **Alles hängt zusammen**, keine losen Teile. i-Punkte, T-Balken, abgesetzte Anfangsbuchstaben (P, W) bekommen automatisch eine **Brücke** oder der Buchstabe wird näher rangeschoben (wie bei „Paul“).
+2. **Jede Verbindung ≥ 0,8 mm** breit (absolutes Minimum 0,5 mm ≈ 2 Drucklinien). Gilt für Buchstabe↔Buchstabe, Name↔Motiv, Motiv↔Ring.
+3. **Name berührt nie direkt den Ring** – immer nur über die Motive.
+4. Ausnahme (wie „Tina“): Name darf in Teile zerfallen, wenn **jedes Teil über ein Motiv** am Ring hängt.
+5. **Motive diagonal gegenüber**, nie über den Ring hinaus, berühren den Namen an ≥ 1 Stelle (mehr ist besser). Größe nur im Notfall ändern.
+6. **Name mittig nach Augenmaß** (Schnörkel vor dem ersten Buchstaben zählen weniger), nicht zu groß/klein.
+7. **Höhe 5 mm** (einstellbar), alles gleich hoch → Arbeiten in **2D**, erst am Ende extrudieren.
+8. Gedruckt wird **umgedreht** (Schauseite auf der Platte) → im Export spiegeln.
+9. Brücken sollen schön aussehen: weich, keine Knicke; beim i-Punkt dünn (Punkt muss erkennbar bleiben).
+Referenz-Screenshots (Canva + Bambu Studio) hat Joel im Chat geschickt (nicht im Repo).
+
+## Benötigte Dateien von Joel (als SVG, sonst STL)
+- `ring` (Ring + Öse, ohne Motiv/Name)
+- je Motiv **ein einzelnes Element**: Herz-Paar, Schneeflocke, Glanzstern(e), Stern, Pfote – in Original-Größe
+- je Motiv eine fertige Beispielkugel (3MF) für Positionen und Namensgröße
+
 ## Technischer Weg (Vorschlag)
 1. Schrift lesen: **opentype.js** → Umrisse des Namens als Pfade (Kerning/Ligaturen der Schrift beachten, damit die Buchstaben verbunden bleiben).
 2. Name skalieren: auf eine Ziel-Breite innerhalb des Rings einpassen; Höhe/Position je Motiv konfigurierbar, sodass der Name **links und rechts den Ring berührt** (wie auf den Produktfotos) und mit Motiven verschmilzt.
