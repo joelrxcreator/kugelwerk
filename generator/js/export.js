@@ -1,8 +1,8 @@
 // Flache Form -> 3D-Körper (gerade hochgezogen) -> 3MF (Bambu Studio) oder STL.
 // Gedruckt wird umgedreht (Schauseite liegt auf der Platte), deshalb wird für den Druck gespiegelt.
 
-import * as G from './geo.js?v=3';
-import { STANDARD } from './einstellungen.js?v=3';
+import * as G from './geo.js?v=4';
+import { STANDARD } from './einstellungen.js?v=4';
 
 const signierteFlaeche = p => {
   let s = 0;

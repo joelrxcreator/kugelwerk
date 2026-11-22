@@ -8,7 +8,8 @@ export const STANDARD = {
   brueckePunkt: 1.0,     // Breite der Brücke zu i-Punkten / Umlaut-Punkten
   brueckeBuchstabe: 1.6, // Breite der Brücke zwischen Buchstaben (z. B. W -> i)
   kleineLuecke: 1.5,     // so kleine Lücken (T-/F-Balken, J -> ü) werden direkt an der engsten Stelle überbrückt
-  maxBruecke: 4.5,       // größere Lücken nur unten an der Grundlinie mit weichem Bogen überbrücken (W -> i, V -> i)
+  maxBruecke: 4.5,       // (alt, nicht mehr genutzt)
+  maxSchwung: 22,        // Schreibschrift-Bogen höchstens so lang (waagerecht) – V -> i, W -> i, Y -> u
   grundlinie: 0.4,       // „unten“ = unteres 40 % des Namens
   ohneVerbindungNach: ['T', 'F'], // nach diesen Buchstaben nie Brücke/Schieben (Teil hängt am Motiv)
   maxSchieben: 3,        // so weit darf ein abgesetzter Anfangs-/Endbuchstabe rangeschoben werden
@@ -20,6 +21,8 @@ export const STANDARD = {
   nameMinHoehe: 12,      // Großbuchstaben kleiner als das -> Hinweis „langer Name“
   randAussen: 0.4,       // Motive bleiben so weit innerhalb der Außenkante
   glaetten: 0,           // Ritzen schließen: aus (Joel will keine Extra-Striche, z. B. im „a“)
+  strafeGroesse: 60,     // Bewertung: 10 % Größenänderung kostet so viel wie 6 mm nach innen rücken
+  bonusTeileVerbinden: 10, // Bonus, wenn ein Motiv getrennte Namensteile verbindet (T + „im“ bei „Tim“)
   plattenGroesse: 256,   // Bambu Lab P1S
   plattenAbstand: 6,     // Abstand zwischen Kugeln auf der Platte
 };
@@ -65,5 +68,6 @@ export const SUCHE = {
   drehSchritt: 5,   // Eigendrehung in diesen Schritten (Grenze je Motiv: MOTIVE.*.drehen)
   nachInnen: 8,     // bis zu so viele mm vom Rand nach innen rücken
   innenSchritt: 1,
-  groesser: [1, 1.08, 1.16], // nur im Notfall etwas größer
+  groesser: [1, 1.1],          // passt gar nichts: Notfall bis +10 %
+  feinGroesse: [0.92, 0.96, 1.04, 1.08], // Feinschliff: Motiv bis ± 10 % kleiner/größer, wenn es schöner passt
 };
