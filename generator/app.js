@@ -1,11 +1,11 @@
 // Bedienoberfläche des 3D-Generators.
 // Aufruf aus dem Backoffice: generator/?titel=Drucker%201&kugeln=[{"nr":"#07","name":"Emma","motiv":"herzen"}]
 
-import { schriftLaden, schriftSpeichern } from './js/schrift.js?v=4';
-import { baueKugel } from './js/kugel.js?v=4';
-import { vorschauSvg } from './js/vorschau.js?v=4';
-import { platte3mf, stl } from './js/export.js?v=4';
-import { MOTIVE, STANDARD } from './js/einstellungen.js?v=4';
+import { schriftLaden, schriftSpeichern } from './js/schrift.js?v=5';
+import { baueKugel } from './js/kugel.js?v=5';
+import { vorschauSvg } from './js/vorschau.js?v=5';
+import { platte3mf, stl } from './js/export.js?v=5';
+import { MOTIVE, STANDARD } from './js/einstellungen.js?v=5';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -89,7 +89,7 @@ function eingabe(e) {
 }
 
 // ---------- Berechnen (parallel im Hintergrund, eine Kugel pro Rechner) ----------
-const VERSION = 4;
+const VERSION = 5;
 const schluessel = k => `${k.name.trim()}|${k.motiv}`;
 let rechner = [];           // { w, frei }
 const unterwegs = new Map(); // schluessel -> true

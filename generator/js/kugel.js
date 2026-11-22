@@ -4,9 +4,9 @@
 // 3. Motive diagonal an den Ring setzen, leicht verschieben/drehen, bis sie Ring UND Namen sicher berühren.
 // 4. Alles vereinigen und prüfen (ein Teil, Verbindungen >= 0,8 mm).
 
-import * as G from './geo.js?v=4';
-import { STANDARD, MOTIVE, SUCHE } from './einstellungen.js?v=4';
-import { nameZuForm, nameGlyphen } from './schrift.js?v=4';
+import * as G from './geo.js?v=5';
+import { STANDARD, MOTIVE, SUCHE } from './einstellungen.js?v=5';
+import { nameZuForm, nameGlyphen } from './schrift.js?v=5';
 
 const rad = g => g * Math.PI / 180;
 
@@ -509,7 +509,7 @@ export function baueKugel({ font, teileDaten, name, motiv, einstellungen = {} })
 
   const pruefung = pruefe({ gesamt, ring, nameForm, motive, cfg });
   // Mehrere Wörter (z. B. „Oma & Opa“): lassen sich nicht sauber verbinden -> je Name eine eigene Kugel
-  if (!pruefung.ok && /\s/.test(name.trim())) pruefung.fehler.unshift('Mehrere Wörter – bitte je Name eine eigene Kugel (z. B. „Oma“ und „Opa“ einzeln)');
+  if (/\s/.test(name.trim())) pruefung.ok = false, pruefung.fehler.unshift('Mehrere Wörter – bitte je Name eine eigene Kugel (z. B. „Oma“ und „Opa“ einzeln)');
   if (klein) pruefung.hinweise.push('Langer Name – Schrift wird recht klein');
   return { name, motiv, cfg, ring, nameForm, bruecken: n.bruecken, motive, gesamt, pruefung, protokoll, varSummen };
 }
