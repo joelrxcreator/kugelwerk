@@ -68,6 +68,6 @@ export const SUCHE = {
   drehSchritt: 5,   // Eigendrehung in diesen Schritten (Grenze je Motiv: MOTIVE.*.drehen)
   nachInnen: 8,     // bis zu so viele mm vom Rand nach innen rücken
   innenSchritt: 1,
-  groesser: [1, 1.1],          // passt gar nichts: Notfall bis +10 %
-  feinGroesse: [0.92, 0.96, 1.04, 1.08], // Feinschliff: Motiv bis ± 10 % kleiner/größer, wenn es schöner passt
+  feinGroesse: [0.92, 1.08], // alle Motive GEMEINSAM bis ± 8 % kleiner/größer, wenn es schöner passt (nie unterschiedlich)
+  notGroesse: 1.1,            // passt gar nichts: Notfall +10 %
 };

@@ -34,7 +34,7 @@ Drucker P1S · Düse 0,4 mm · Schicht 0,2 mm · Dicke 5 mm (in der App einstell
 8b. **Drehen:** Schneeflocken & Sterne ± 20°, Pfoten ± 35° (die zwei Pfoten bewusst unterschiedlich schräg), **Glanzsterne & Herzen nie**.
 8c. Motive **berühren** den Ring, stecken aber nicht zu tief drin: der Ring darf **nicht durch das Innere** von Herzen, Pfoten oder Stern-Umriss laufen.
 8e. Besteht der Name aus Teilen (T + „im“), wird bevorzugt, dass ein Motiv **beide Teile verbindet**.
-8f. Motive dürfen **± 10 %** kleiner/größer werden, wenn es dadurch schöner passt.
+8f. Motive dürfen etwas kleiner/größer werden (± 8 %, Notfall + 10 %), wenn es dadurch schöner passt – aber **immer alle Teile gemeinsam gleich groß** (nie eine Pfote größer als die andere).
 8d. Motive verdecken den Namen möglichst wenig und ragen nicht in Buchstaben hinein (z. B. Pfote ins E bei „Emma“).
 9. **Name mittig nach Augenmaß**: Mitte aus Umriss + Schwerpunkt (Schnörkel zählen weniger), max. 80 × 36 mm – Großbuchstaben dürfen bis 30 mm hoch werden, auch wenn f/J/y weit hinausragen (sonst wird „Elif“ winzig). Sehr lange Namen → Hinweis.
 10. Gedruckt wird **umgedreht** (Schauseite auf der Platte) → Export gespiegelt.

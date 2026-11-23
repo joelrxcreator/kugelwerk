@@ -26,9 +26,9 @@ export const vereinige = (a, b, fill) => bool(C().ClipType.ctUnion, a, b || [], 
 export const schneide = (a, b) => bool(C().ClipType.ctIntersection, a, b);
 export const ohne = (a, b) => bool(C().ClipType.ctDifference, a, b);
 
-export function versatz(form, d, rund = true) {
+export function versatz(form, d, rund = true, toleranz = 0.02) {
   const L = C();
-  const co = new L.ClipperOffset(2, 0.02 * SK);
+  const co = new L.ClipperOffset(2, toleranz * SK);
   co.AddPaths(zuClipper(form), rund ? L.JoinType.jtRound : L.JoinType.jtMiter, L.EndType.etClosedPolygon);
   const out = new L.Paths();
   co.Execute(out, d * SK);
