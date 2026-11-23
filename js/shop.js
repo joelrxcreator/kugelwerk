@@ -192,7 +192,7 @@
       inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } };
       inp.onblur = () => { S.draft[S.active].name = inp.value.trim().replace(/\s+/g, ' '); inp.value = S.draft[S.active].name; saveDraft(); };
     }
-    updateBulkHint(); fitPreview();
+    updateBulkHint(); fitPreview(); if ($('#nameInput')) caseHint($('#nameInput').value);
     const n = S.draft.length; $('#countLbl').textContent = n === 1 ? '1 Kugel' : `${n} Kugeln`;
   }
 
@@ -207,6 +207,7 @@
           <input id="nameInput" class="input" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false"
             enterkeyhint="done" maxlength="${MAX_NAME}" placeholder="Name eingeben, z. B. Emma" value="${esc(it.name)}" aria-label="Name für Kugel ${i + 1}">
           <div class="name-hint" id="nameHint">${it.name ? '' : 'Vorname oder Spitzname – max. 16 Zeichen.'}</div>
+          <div class="case-hint" id="caseHint" hidden></div>
           <div class="name-preview ${it.name ? '' : 'empty'}" id="namePrev" aria-hidden="true"><span>${esc(it.name) || 'Dein Name'}</span><small>In dieser Schrift kommt dein Name auf die Kugel</small></div>
         </div>
         <div>
@@ -237,7 +238,18 @@
     } else { hint.textContent = v.length >= MAX_NAME ? `Maximal ${MAX_NAME} Zeichen.` : ''; hint.className = 'name-hint'; }
     inp.classList.remove('invalid');
     S.draft[S.active].name = v; saveDraft(); updateDock();
+    caseHint(v);
     const pv = $('#namePrev'); if (pv) { pv.classList.toggle('empty', !v.trim()); pv.querySelector('span').textContent = v.trim() || 'Dein Name'; fitPreview(); }
+  }
+  const lowerStart = v => /^[a-zà-öø-ÿā-ž]/.test((v || '').trim());
+  const capFirst = v => { const t = v.trim(); return t.charAt(0).toLocaleUpperCase('de-DE') + t.slice(1); };
+  function caseHint(v) {
+    const box = $('#caseHint'); if (!box) return;
+    if (lowerStart(v)) {
+      box.hidden = false;
+      box.innerHTML = `${I('alert')}<span>Der Name beginnt mit einem <b>kleinen Buchstaben</b> – so wird er auch gedruckt.</span><button type="button" id="capBtn">Groß: ${esc(capFirst(v))}</button>`;
+      $('#capBtn').onclick = () => { const inp = $('#nameInput'); inp.value = capFirst(inp.value); onName(inp); inp.focus(); };
+    } else box.hidden = true;
   }
   function fitPreview() {
     const pv = $('#namePrev'); if (!pv) return;
@@ -325,7 +337,7 @@
     const sh = sheet(`
       <h3>Alles richtig?</h3>
       <p class="sub">Bitte prüfe die Schreibweise – genau so wird gedruckt.</p>
-      <div class="lines">${S.draft.map(it => `<div class="line">${motif(it.variant)}<span class="nm"><span class="scr">${esc(it.name)}</span><small>Schreibweise: ${esc(it.name)}</small></span><span class="vr">${esc(labelOf(it.variant))}</span></div>`).join('')}</div>
+      <div class="lines">${S.draft.map(it => `<div class="line">${motif(it.variant)}<span class="nm"><span class="scr">${esc(it.name)}</span><small>Schreibweise: ${esc(it.name)}${lowerStart(it.name) ? ' · <b class="warn-txt">beginnt klein</b>' : ''}</small></span><span class="vr">${esc(labelOf(it.variant))}</span></div>`).join('')}</div>
       <div class="total"><span>${n === 1 ? '1 Kugel' : `${n} Kugeln à ${eur(p.each)}`}</span><b class="num">${eur(p.total)}</b></div>
       <div class="note">${I('wallet')}<span>Bezahlt wird gleich an der Kasse – bar oder mit Karte. Erst dann starten wir den Druck.</span></div>
       <div class="note" id="etaNote" hidden></div>
@@ -482,6 +494,7 @@
       <div class="status-card" id="statusCard">${statusCard(o, ph)}</div>
       <div class="section-title" style="margin-top:28px"><h2 style="font-size:24px">Deine Kugeln</h2><span>${eur(o.total)} · bezahlt</span></div>
       ${itemsLines(o)}
+      <div class="charity-card">${I('heart')}<div><b>Danke für deine Unterstützung!</b><span>Der gesamte Gewinn wird für eine Mädchenstation in Kenia verwendet.</span></div></div>
       ${ph === 'queue' || ph === 'print' ? `<div class="hint-box">${I('pencil')}<span>Tippfehler entdeckt? Sag kurz am Stand Bescheid – solange noch nicht gedruckt wird, korrigieren wir das gern.</span></div>` : ''}
       <div class="hint-box">${I('info')}<span>Du kannst diese Seite einfach schließen. Wenn du sie wieder öffnest, siehst du hier den aktuellen Stand.</span></div>
       <div class="pay-actions"><button class="btn secondary" id="moreBtn">${I('plus')} Weitere Kugel bestellen</button></div>`;

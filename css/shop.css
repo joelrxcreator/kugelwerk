@@ -271,10 +271,22 @@ canvas.confetti { position: fixed; inset: 0; pointer-events: none; z-index: 90; 
 
 /* Live-Vorschau des Namens in der Kugel-Schrift */
 .name-preview { margin-top: 10px; border-radius: 18px; padding: 14px 12px 10px; text-align: center; background: var(--accent-tint); overflow: hidden; }
-.name-preview span { display: block; font-family: var(--script); font-size: 46px; line-height: 1.25; color: var(--accent); white-space: nowrap; transform: rotate(-3deg); }
+.name-preview span { display: block; font-family: var(--script); font-size: 46px; line-height: 1.25; color: var(--accent); white-space: nowrap; }
 .name-preview small { display: block; margin-top: 6px; font-family: var(--sub); font-size: 12px; font-weight: 600; color: var(--ink-3); letter-spacing: .02em; }
 .name-preview.empty span { opacity: .3; }
 .scr { font-family: var(--script); font-weight: 400; font-size: 1.25em; letter-spacing: .01em; }
 .line .nm .scr { display: block; font-size: 24px; line-height: 1.2; }
 .line .nm small { display: block; font-size: 11.5px; letter-spacing: .08em; color: var(--ink-3); font-weight: 600; }
 .krow .nm.scr { font-size: 25px; font-weight: 400; }
+
+/* Hinweis: Name beginnt klein */
+.case-hint { margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 8px 8px 12px; border-radius: 12px; background: var(--warn-tint); color: #6b4300; font-size: 13.5px; line-height: 1.35; animation: pop .25s var(--ease); }
+.case-hint .ico { width: 17px; height: 17px; color: var(--warn); }
+.case-hint span { flex: 1 1 180px; }
+.case-hint button { flex: none; border: 0; border-radius: 9px; background: #fff; color: var(--ink); font: inherit; font-weight: 700; font-size: 13.5px; min-height: 36px; padding: 0 12px; cursor: pointer; box-shadow: inset 0 0 0 1px rgb(154 91 0 / .25); }
+.warn-txt { color: var(--warn); }
+/* Spendenhinweis auf der Statusseite */
+.charity-card { margin-top: 14px; display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: var(--r-md); background: var(--beige); color: var(--accent); }
+.charity-card .ico { width: 26px; height: 26px; flex: none; }
+.charity-card b { display: block; font-size: 15.5px; }
+.charity-card span { display: block; font-size: 14px; color: var(--ink); opacity: .85; }
